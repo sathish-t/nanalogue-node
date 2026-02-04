@@ -13,14 +13,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Invalid `tag` values now error instead of being silently ignored
 - `seqTable` validates `fullRegion` and `modRegion` constraints (errors if explicitly set to incompatible values)
 - `peek` parsing hardened with strand character validation (expects '+' or '-')
+- Musl builds now use pypa musllinux containers with perl for OpenSSL compilation
+- Glibc builds now use manylinux_2_28 containers (glibc 2.28+) for broader Linux compatibility
 
 ### Changed
 - `winOp` type narrowed to `'density' | 'grad_density'` union
 - `MappedReadInfo.alignment_type` type narrowed to proper union of valid alignment types
 - `rejectModQualNonInclusive` documentation clarified: errors if low > high, no rejection if range <= 1
-- Bump vitest from 2.1.9 to 4.0.18 
-- Bump @biomejs/biome from 2.3.13 to 2.3.14 
-- Bump @napi-rs/cli from 2.18.4 to 3.5.1 
+- CI test matrix updated: Node 22 across all platforms, Node 24 on Linux (x64 + ARM)
+- Publish workflow uses Docker containers for all Linux builds (glibc and musl)
+- Bump vitest from 2.1.9 to 4.0.18
+- Bump @biomejs/biome from 2.3.13 to 2.3.14
+- Bump @napi-rs/cli from 2.18.4 to 3.5.1
 
 ### Added
 - Tests for invalid tag validation across all functions

@@ -56,8 +56,21 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, macos-15-intel]
-        node: ["20", "22"]
+        include:
+          # Node 22 across all platforms (minimum supported version)
+          - os: ubuntu-latest
+            node: "22"
+          - os: ubuntu-24.04-arm
+            node: "22"
+          - os: macos-latest
+            node: "22"
+          - os: macos-15-intel
+            node: "22"
+          # Node 24 version coverage on Linux
+          - os: ubuntu-latest
+            node: "24"
+          - os: ubuntu-24.04-arm
+            node: "24"
 
     steps:
       - name: Checkout code
