@@ -4,11 +4,7 @@
 import { randomUUID } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
-import {
-  type ReadOptions,
-  simulateModBam,
-  type WindowOptions,
-} from '../index';
+import { type ReadOptions, simulateModBam, type WindowOptions } from '../index';
 
 const TEST_DATA_DIR = resolve(__dirname, 'data');
 const SIMULATION_CONFIGS_DIR = join(TEST_DATA_DIR, 'simulation_configs');

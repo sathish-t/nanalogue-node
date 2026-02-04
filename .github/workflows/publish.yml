@@ -1,0 +1,174 @@
+# Publish workflow for nanalogue-node
+# Builds native binaries for all platforms and publishes to npm
+# Triggers on GitHub Release or manual dispatch (dry-run)
+
+name: Publish to npm
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run (build & validate without publishing)"
+        required: true
+        default: true
+        type: boolean
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: Build (${{ matrix.target }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # macOS builds
+          - target: x86_64-apple-darwin
+            runner: macos-13
+          - target: aarch64-apple-darwin
+            runner: macos-latest
+
+          # Linux glibc builds
+          - target: x86_64-unknown-linux-gnu
+            runner: ubuntu-latest
+          - target: aarch64-unknown-linux-gnu
+            runner: ubuntu-24.04-arm
+
+          # Linux musl builds (via Docker)
+          - target: x86_64-unknown-linux-musl
+            runner: ubuntu-latest
+            use_docker: true
+          - target: aarch64-unknown-linux-musl
+            runner: ubuntu-24.04-arm
+            use_docker: true
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        if: ${{ !matrix.use_docker }}
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Setup Node.js
+        if: ${{ !matrix.use_docker }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install npm dependencies
+        if: ${{ !matrix.use_docker }}
+        run: npm ci
+
+      - name: Build native module
+        if: ${{ !matrix.use_docker }}
+        run: |
+          npm run build -- --target ${{ matrix.target }}
+
+      - name: Build native module (musl via Docker)
+        if: ${{ matrix.use_docker }}
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}:/workspace \
+            -w /workspace \
+            node:22-alpine \
+            sh -c '
+              set -e
+
+              # Install build dependencies
+              apk add --no-cache \
+                build-base \
+                curl \
+                openssl-dev \
+                musl-dev
+
+              # Install Rust
+              curl https://sh.rustup.rs -sSf | sh -s -- -y
+              . "$HOME/.cargo/env"
+              rustup target add ${{ matrix.target }}
+
+              # Install npm dependencies and build
+              npm ci
+              npm run build -- --target ${{ matrix.target }}
+            '
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: bindings-${{ matrix.target }}
+          path: "*.node"
+          if-no-files-found: error
+
+  publish:
+    name: Publish to npm
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      contents: read
+      id-token: write # OIDC trusted publishing
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Move artifacts to root
+        run: |
+          find artifacts -name "*.node" -exec mv {} . \;
+          ls -la *.node
+
+      - name: Prepare npm packages
+        run: npx napi prepublish -t npm
+
+      - name: List packages (dry run info)
+        run: |
+          echo "=== Main package ==="
+          cat package.json
+          echo ""
+          echo "=== Platform packages ==="
+          ls -la npm/
+
+      - name: Publish to npm (dry run)
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
+        run: |
+          echo "DRY RUN - would publish the following packages:"
+          echo "Main: @nanalogue/node"
+          for dir in npm/*/; do
+            echo "Platform: $(basename $dir)"
+          done
+          npm publish --dry-run --provenance --access public
+
+      - name: Publish to npm
+        if: ${{ github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && !inputs.dry_run) }}
+        run: |
+          # Publish platform-specific packages first
+          for dir in npm/*/; do
+            echo "Publishing $(basename $dir)..."
+            cd "$dir"
+            npm publish --provenance --access public
+            cd ../..
+          done
+
+          # Publish main package
+          echo "Publishing main package..."
+          npm publish --provenance --access public

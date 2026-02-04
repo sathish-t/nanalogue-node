@@ -29,3 +29,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Modification filtering with `tag`, `modStrand`, `trimReadEndsMod`
 - Input validation with clear error messages for `threads` and `sampleFraction`
 - Comprehensive test suite with 174 tests
+- GitHub Actions CI/CD:
+  - CI workflow with lint, typecheck, and cross-platform test matrix (Ubuntu/macOS, x64/ARM64, Node 20/22)
+  - Nightly CI to catch upstream breakage
+  - Automated npm publishing via OIDC trusted publishing on GitHub Release
+  - Dependabot for cargo, npm, and github-actions dependency updates
