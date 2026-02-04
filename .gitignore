@@ -1,0 +1,92 @@
+# NOTE: we are just going to dump a bunch of filename
+# and folder patterns used by common programming tools
+# here. This does not mean we are using all these tools;
+# some of these are just for future-proofing.
+
+# ===================
+# Rust / Cargo
+# ===================
+target/
+# Cargo.lock IS committed for this project because:
+# - This produces a final binary artifact (.node file), not a Rust library
+# - Not published to crates.io, so no downstream Rust consumers
+# - Ensures reproducible builds and debugging capability
+
+# ===================
+# Node.js / npm
+# ===================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.yarn-integrity
+
+# NAPI-RS platform-specific native binaries (built during npm install)
+*.node
+
+# TypeScript build output (if applicable)
+dist/
+
+# ===================
+# NAPI-RS Generated Files
+# ===================
+# These are auto-generated but committed for the package to work:
+# - index.js (main entry point with loading logic)
+# - native.d.ts (TypeScript definitions for native module)
+# DO NOT add index.js or native.d.ts here
+
+# ===================
+# Testing
+# ===================
+coverage/
+.nyc_output/
+
+# ===================
+# IDEs and Editors
+# ===================
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+*.sublime-project
+*.sublime-workspace
+
+# ===================
+# OS Files
+# ===================
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ===================
+# Project-specific (local development)
+# ===================
+# Claude AI assistant files
+CLAUDE.md
+.claude/
+
+# Local brainstorming notes (not for GitHub)
+brainstorming/
+
+# Temporary files
+tmp/
+tmp*
+*.tmp
+
+# Local configuration overrides
+ignore/
+ignore*
+slurm*
+coderabbit.md
+commit_message
+
+# Backup files
+bkup/
+*.bak
+*.backup
+
+# HPC/cluster artifacts
+cargo.def
+cargo.img

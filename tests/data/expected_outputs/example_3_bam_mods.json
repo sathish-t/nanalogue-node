@@ -1,0 +1,12 @@
+[
+{"alignment_type":"primary_forward","alignment":{"start":0,"end":10,"contig":"dummyI","contig_id":0},"mod_table":[],"read_id":"read001","seq_len":10},
+{"alignment_type":"secondary_forward","alignment":{"start":4,"end":12,"contig":"dummyI","contig_id":0},"mod_table":[],"read_id":"read002","seq_len":8},
+{"alignment_type":"primary_reverse","alignment":{"start":9,"end":15,"contig":"dummyI","contig_id":0},"mod_table":[],"read_id":"read003","seq_len":6},
+{"alignment_type":"primary_forward","alignment":{"start":0,"end":15,"contig":"dummyII","contig_id":1},"mod_table":[],"read_id":"read004","seq_len":15},
+{"alignment_type":"primary_forward","alignment":{"start":19,"end":31,"contig":"dummyII","contig_id":1},"mod_table":[],"read_id":"read005","seq_len":12},
+{"alignment_type":"secondary_reverse","alignment":{"start":29,"end":39,"contig":"dummyII","contig_id":1},"mod_table":[],"read_id":"read006","seq_len":10},
+{"alignment_type":"supplementary_forward","alignment":{"start":0,"end":20,"contig":"dummyIII","contig_id":2},"mod_table":[],"read_id":"read007","seq_len":20},
+{"alignment_type":"primary_forward","alignment":{"start":24,"end":39,"contig":"dummyIII","contig_id":2},"mod_table":[],"read_id":"read008","seq_len":15},
+{"alignment_type":"supplementary_reverse","alignment":{"start":39,"end":57,"contig":"dummyIII","contig_id":2},"mod_table":[],"read_id":"read009","seq_len":18},
+{"alignment_type":"primary_forward","alignment":{"start":54,"end":66,"contig":"dummyIII","contig_id":2},"mod_table":[],"read_id":"read010","seq_len":12}
+]
