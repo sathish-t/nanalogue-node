@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Invalid `tag` values now error instead of being silently ignored
 - `seqTable` validates `fullRegion` and `modRegion` constraints (errors if explicitly set to incompatible values)
 - `peek` parsing hardened with strand character validation (expects '+' or '-')
-- Musl builds now use pypa musllinux containers with perl for OpenSSL compilation
+- Musl builds use pypa musllinux containers with proper toolchain (perl, gcc linker, zlib/bzip2/xz static libs)
 - Glibc builds now use manylinux_2_28 containers (glibc 2.28+) for broader Linux compatibility
 
 ### Changed
