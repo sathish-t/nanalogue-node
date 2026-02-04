@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-02-04
+
 ### Fixed
 - Invalid `tag` values now error instead of being silently ignored
 - `seqTable` validates `fullRegion` and `modRegion` constraints (errors if explicitly set to incompatible values)
@@ -16,6 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `winOp` type narrowed to `'density' | 'grad_density'` union
 - `MappedReadInfo.alignment_type` type narrowed to proper union of valid alignment types
 - `rejectModQualNonInclusive` documentation clarified: errors if low > high, no rejection if range <= 1
+- Bump vitest from 2.1.9 to 4.0.18 
+- Bump @biomejs/biome from 2.3.13 to 2.3.14 
+- Bump @napi-rs/cli from 2.18.4 to 3.5.1 
 
 ### Added
 - Tests for invalid tag validation across all functions
