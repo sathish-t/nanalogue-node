@@ -22,7 +22,7 @@ export interface MappedReadInfo {
   reference_start: number;
   reference_end: number;
   alignment_length: number;
-  alignment_type: string;
+  alignment_type: 'primary_forward' | 'primary_reverse' | 'secondary_forward' | 'secondary_reverse' | 'supplementary_forward' | 'supplementary_reverse';
   mod_count: string;
 }
 
@@ -68,7 +68,7 @@ interface BaseReadOptionsCore {
   /**
    * Reject modification calls where low < probability < high.
    * Tuple of [low, high] where both are 0-255.
-   * If low >= high or difference is <= 1, no rejection range is applied.
+   * If low > high, throws an error. If high - low <= 1, no rejection range is applied.
    */
   rejectModQualNonInclusive?: [number, number];
   /** Trim modification info from read ends (bp). */
@@ -164,7 +164,7 @@ interface BaseWindowOptionsCore {
   /** Step size for sliding the window. */
   step: number;
   /** Type of windowing operation: "density" or "grad_density". */
-  winOp?: string;
+  winOp?: 'density' | 'grad_density';
   /** Minimum sequence length filter. */
   minSeqLen?: number;
   /** Minimum alignment length filter. */
@@ -192,7 +192,7 @@ interface BaseWindowOptionsCore {
   /**
    * Reject modification calls where low < probability < high.
    * Tuple of [low, high] where both are 0-255.
-   * If low >= high or difference is <= 1, no rejection range is applied.
+   * If low > high, throws an error. If high - low <= 1, no rejection range is applied.
    */
   rejectModQualNonInclusive?: [number, number];
   /** Trim modification info from read ends (bp). */

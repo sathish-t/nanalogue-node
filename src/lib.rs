@@ -131,6 +131,11 @@ fn peek_sync(options: &PeekOptions) -> Result<PeekResult> {
                 let strand = chars
                     .next()
                     .ok_or_else(|| Error::from_reason("Modification string missing strand"))?;
+                if strand != '+' && strand != '-' {
+                    return Err(Error::from_reason(format!(
+                        "Invalid strand character '{strand}' in modification string (expected '+' or '-')"
+                    )));
+                }
                 let mod_code: String = chars.collect();
                 if mod_code.is_empty() {
                     return Err(Error::from_reason("Modification string missing mod code"));
@@ -378,9 +383,9 @@ impl TryFrom<&ReadOptions> for InputMods<OptionalTag> {
         if let Some(v) = options.base_qual_filter_mod {
             let _: &mut InputModsBuilder<OptionalTag> = builder.base_qual_filter_mod(v);
         }
-        if let Some(v) = options.tag.as_ref()
-            && let Ok(tag) = OptionalTag::from_str(v)
-        {
+        if let Some(v) = options.tag.as_ref() {
+            let tag = OptionalTag::from_str(v)
+                .map_err(|_err| Error::from_reason(format!("Invalid tag value: '{v}'")))?;
             let _: &mut InputModsBuilder<OptionalTag> = builder.tag(tag);
         }
         if let Some(v) = options.mod_region.as_ref() {
@@ -688,6 +693,20 @@ fn seq_table_sync(options: &ReadOptions) -> Result<String> {
     if region_str.is_empty() {
         return Err(Error::from_reason(
             "region parameter is required for seq_table (cannot be empty)",
+        ));
+    }
+
+    // Validate seqTable constraints for pynanalogue compatibility
+    if options.full_region == Some(false) {
+        return Err(Error::from_reason(
+            "seqTable requires fullRegion to be true (or omitted)",
+        ));
+    }
+    if let Some(mod_region) = options.mod_region.as_ref()
+        && mod_region != region_str
+    {
+        return Err(Error::from_reason(
+            "seqTable requires modRegion to match region (or be omitted)",
         ));
     }
 

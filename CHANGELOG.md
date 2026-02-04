@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+- Invalid `tag` values now error instead of being silently ignored
+- `seqTable` validates `fullRegion` and `modRegion` constraints (errors if explicitly set to incompatible values)
+- `peek` parsing hardened with strand character validation (expects '+' or '-')
+
+### Changed
+- `winOp` type narrowed to `'density' | 'grad_density'` union
+- `MappedReadInfo.alignment_type` type narrowed to proper union of valid alignment types
+- `rejectModQualNonInclusive` documentation clarified: errors if low > high, no rejection if range <= 1
+
+### Added
+- Tests for invalid tag validation across all functions
+- Tests for `fullRegion` without `region` error handling
+- Tests for `seqTable` constraint validation
+
+### Infrastructure
+- Bump actions/checkout from v4 to v6
+- Bump actions/setup-node from v4 to v6
+- Bump actions/upload-artifact from v4 to v6
+- Bump actions/download-artifact from v4 to v7
+
 ## [0.1.0] - 2026-02-04
 
 ### Added

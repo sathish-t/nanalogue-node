@@ -14,7 +14,7 @@ export interface PeekResult {
 export interface PeekOptions {
   /** Path to the BAM file (local path or URL). */
   bamPath: string
-  /** If true, treat bam_path as a URL. Otherwise treat as file path. */
+  /** If true, treat `bam_path` as a URL. Otherwise treat as file path. */
   treatAsUrl?: boolean
 }
 /**
@@ -32,7 +32,7 @@ export declare function peek(options: PeekOptions): Promise<PeekResult>
 export interface ReadOptions {
   /** Path to the BAM file (local path or URL). */
   bamPath: string
-  /** If true, treat bam_path as a URL. Otherwise treat as file path. */
+  /** If true, treat `bam_path` as a URL. Otherwise treat as file path. */
   treatAsUrl?: boolean
   /** Minimum sequence length filter. */
   minSeqLen?: number
@@ -116,7 +116,7 @@ export declare function bamMods(options: ReadOptions): Promise<any>
 export interface WindowOptions {
   /** Path to the BAM file (local path or URL). */
   bamPath: string
-  /** If true, treat bam_path as a URL. Otherwise treat as file path. */
+  /** If true, treat `bam_path` as a URL. Otherwise treat as file path. */
   treatAsUrl?: boolean
   /** Window size in number of bases. */
   win: number

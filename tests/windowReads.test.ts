@@ -93,7 +93,7 @@ describe('windowReads error handling', () => {
         bamPath,
         win: 5,
         step: 2,
-        winOp: 'invalid_option',
+        winOp: 'invalid_option' as 'density', // Cast to bypass TS check; tests runtime validation for JS users
       }),
     ).rejects.toThrow(/win_op must be set to/);
   });

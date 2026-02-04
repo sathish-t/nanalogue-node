@@ -177,7 +177,7 @@ All read functions support extensive filtering:
 | `tag` | Filter by modification type |
 | `modStrand` | Filter by modification strand ("bc" or "bc_comp") |
 | `minModQual` | Minimum modification quality threshold |
-| `rejectModQualNonInclusive` | Reject mods in probability range [low, high] |
+| `rejectModQualNonInclusive` | Reject mods where low < prob < high |
 | `trimReadEndsMod` | Trim modification info from read ends |
 | `baseQualFilterMod` | Base quality filter for modifications |
 | `modRegion` | Genomic region for modification filtering |
