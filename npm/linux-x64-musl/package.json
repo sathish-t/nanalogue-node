@@ -1,0 +1,38 @@
+{
+  "name": "@nanalogue/node-linux-x64-musl",
+  "version": "0.1.1",
+  "cpu": [
+    "x64"
+  ],
+  "main": "nanalogue.linux-x64-musl.node",
+  "files": [
+    "nanalogue.linux-x64-musl.node"
+  ],
+  "description": "Node.js bindings for Nanalogue: single-molecule BAM/Mod-BAM analysis",
+  "keywords": [
+    "bioinformatics",
+    "genomics",
+    "bam",
+    "modifications",
+    "nanopore",
+    "pacbio",
+    "illumina",
+    "napi-rs",
+    "rust"
+  ],
+  "author": "Sathish Thiyagarajan <mail@unintegrable.com>",
+  "license": "MIT",
+  "engines": {
+    "node": ">= 22"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sathish-t/nanalogue-node"
+  },
+  "os": [
+    "linux"
+  ],
+  "libc": [
+    "musl"
+  ]
+}

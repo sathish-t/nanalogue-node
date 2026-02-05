@@ -1,6 +1,6 @@
 {
   "name": "@nanalogue/node",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Node.js bindings for Nanalogue: single-molecule BAM/Mod-BAM analysis",
   "main": "index.js",
   "types": "index.d.ts",
@@ -34,7 +34,7 @@
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
     "format": "biome format --write .",
-    "prepublishOnly": "napi prepublish -t npm"
+    "prepublishOnly": "napi pre-publish --npm-dir npm"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.3.14",
@@ -49,6 +49,8 @@
     "bam",
     "modifications",
     "nanopore",
+    "pacbio",
+    "illumina",
     "napi-rs",
     "rust"
   ],
@@ -57,5 +59,13 @@
     "type": "git",
     "url": "https://github.com/sathish-t/nanalogue-node"
   },
-  "author": "Sathish Thiyagarajan <mail@unintegrable.com>"
+  "author": "Sathish Thiyagarajan <mail@unintegrable.com>",
+  "optionalDependencies": {
+    "@nanalogue/node-darwin-x64": "0.1.1",
+    "@nanalogue/node-darwin-arm64": "0.1.1",
+    "@nanalogue/node-linux-x64-gnu": "0.1.1",
+    "@nanalogue/node-linux-x64-musl": "0.1.1",
+    "@nanalogue/node-linux-arm64-gnu": "0.1.1",
+    "@nanalogue/node-linux-arm64-musl": "0.1.1"
+  }
 }

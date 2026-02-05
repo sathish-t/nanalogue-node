@@ -166,7 +166,7 @@ jobs:
           ls -la *.node
 
       - name: Prepare npm packages
-        run: npx napi prepublish -t npm
+        run: npx napi pre-publish --npm-dir npm --no-gh-release
 
       - name: List packages (dry run info)
         run: |
