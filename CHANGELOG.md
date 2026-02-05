@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.2] - 2026-02-05
 
 ### Fixed
-- Main package size reduced from 53MB to ~20KB (removed bundled .node binaries)
+- Main package no longer bundles .node binaries (53MB → minimal JS/TS only)
 
 ### Changed
 - README examples show concrete outputs; publish workflow runs tests before publishing

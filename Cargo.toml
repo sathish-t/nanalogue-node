@@ -1,6 +1,6 @@
 [package]
 name = "nanalogue-node"
-version = "0.1.0"
+version = "0.1.2"
 edition = "2024"
 description = "Node.js bindings for Nanalogue: single-molecule BAM/Mod-BAM analysis"
 license = "MIT"

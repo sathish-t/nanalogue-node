@@ -19,8 +19,32 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  version-check:
+    name: Verify versions match
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install yq
+        run: sudo snap install yq
+      - name: Check versions match
+        run: |
+          V=$(jq -r '.version' package.json)
+          echo "Expected version: $V"
+          [ "$(yq -p toml -oy '.package.version' Cargo.toml)" = "$V" ] || exit 1
+          [ "$(yq -p toml -oy '.package[] | select(.name == "nanalogue-node") | .version' Cargo.lock)" = "$V" ] || exit 1
+          for f in npm/*/package.json; do [ "$(jq -r '.version' "$f")" = "$V" ] || exit 1; done
+          echo "All versions match"
+      - name: Check tag matches version
+        if: github.event_name == 'release'
+        run: |
+          TAG="${{ github.event.release.tag_name }}"
+          TAG_V="${TAG#v}"
+          V=$(jq -r '.version' package.json)
+          [ "$TAG_V" = "$V" ] || { echo "Tag $TAG_V != package.json $V"; exit 1; }
+
   build:
     name: Build (${{ matrix.target }})
+    needs: version-check
     runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
