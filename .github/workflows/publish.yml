@@ -119,21 +119,12 @@ jobs:
               rustup target add ${{ matrix.target }}
 
               # Configure linker for musl targets (Alpine gcc targets musl natively)
-              mkdir -p .cargo
-              cat > .cargo/config.toml << CARGO_EOF
-          [target.x86_64-unknown-linux-musl]
-          linker = "gcc"
-
-          [target.aarch64-unknown-linux-musl]
-          linker = "gcc"
-          CARGO_EOF
+              export CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_LINKER=gcc
+              export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER=gcc
 
               # Install npm dependencies and build
               npm ci
               npm run build -- --target ${{ matrix.target }}
-
-              # Clean up temporary cargo config
-              rm -rf .cargo
             '
 
       - name: Upload artifact
