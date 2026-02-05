@@ -1,27 +1,23 @@
 {
   "name": "@nanalogue/node",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Node.js bindings for Nanalogue: single-molecule BAM/Mod-BAM analysis",
   "main": "index.js",
   "types": "index.d.ts",
   "files": [
     "index.js",
-    "index.d.ts",
-    "*.node"
+    "index.d.ts"
   ],
   "napi": {
-    "name": "nanalogue",
-    "triples": {
-      "defaults": false,
-      "additional": [
-        "x86_64-apple-darwin",
-        "aarch64-apple-darwin",
-        "x86_64-unknown-linux-gnu",
-        "x86_64-unknown-linux-musl",
-        "aarch64-unknown-linux-gnu",
-        "aarch64-unknown-linux-musl"
-      ]
-    }
+    "binaryName": "nanalogue",
+    "targets": [
+      "x86_64-apple-darwin",
+      "aarch64-apple-darwin",
+      "x86_64-unknown-linux-gnu",
+      "x86_64-unknown-linux-musl",
+      "aarch64-unknown-linux-gnu",
+      "aarch64-unknown-linux-musl"
+    ]
   },
   "engines": {
     "node": ">= 22"
@@ -57,15 +53,15 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/sathish-t/nanalogue-node"
+    "url": "git+https://github.com/sathish-t/nanalogue-node.git"
   },
   "author": "Sathish Thiyagarajan <mail@unintegrable.com>",
   "optionalDependencies": {
-    "@nanalogue/node-darwin-x64": "0.1.1",
-    "@nanalogue/node-darwin-arm64": "0.1.1",
-    "@nanalogue/node-linux-x64-gnu": "0.1.1",
-    "@nanalogue/node-linux-x64-musl": "0.1.1",
-    "@nanalogue/node-linux-arm64-gnu": "0.1.1",
-    "@nanalogue/node-linux-arm64-musl": "0.1.1"
+    "@nanalogue/node-darwin-x64": "0.1.2",
+    "@nanalogue/node-darwin-arm64": "0.1.2",
+    "@nanalogue/node-linux-x64-gnu": "0.1.2",
+    "@nanalogue/node-linux-x64-musl": "0.1.2",
+    "@nanalogue/node-linux-arm64-gnu": "0.1.2",
+    "@nanalogue/node-linux-arm64-musl": "0.1.2"
   }
 }

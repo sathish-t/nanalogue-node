@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-02-05
+
+### Fixed
+- Main package size reduced from 53MB to ~20KB (removed bundled .node binaries)
+
+### Changed
+- README examples show concrete outputs; publish workflow runs tests before publishing
+
+### Added
+- `tests/readme-examples.test.ts` to verify README code examples
+
 ## [0.1.1] - 2026-02-04
 
 ### Fixed

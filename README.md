@@ -55,11 +55,12 @@ Quickly extract BAM file metadata without processing all records.
 ```typescript
 import { peek } from '@nanalogue/node';
 
-const metadata = await peek({ bamPath: 'example.bam' });
-console.log(metadata);
+const result = await peek({ bamPath: 'tests/data/examples/example_1.bam' });
+console.log(result);
+// Output:
 // {
-//   contigs: { chr1: 248956422, chr2: 242193529, ... },
-//   modifications: [['T', '+', 'T'], ['C', '+', 'm']]
+//   contigs: { dummyI: 22, dummyII: 48, dummyIII: 76 },
+//   modifications: [ [ 'G', '-', '7200' ], [ 'T', '+', 'T' ] ]
 // }
 ```
 
@@ -70,8 +71,19 @@ Get information about reads in the BAM file.
 ```typescript
 import { readInfo } from '@nanalogue/node';
 
-const reads = await readInfo({ bamPath: 'example.bam' });
-// Returns array of read records with alignment info and modification counts
+const reads = await readInfo({ bamPath: 'tests/data/examples/example_1.bam' });
+console.log(reads[0]);
+// Output (first read):
+// {
+//   read_id: '5d10eb9a-aae1-4db8-8ec6-7ebb34d32575',
+//   sequence_length: 8,
+//   contig: 'dummyI',
+//   reference_start: 9,
+//   reference_end: 17,
+//   alignment_length: 8,
+//   alignment_type: 'primary_forward',
+//   mod_count: 'T+T:0;(probabilities >= 0.5020, PHRED base qual >= 0)'
+// }
 ```
 
 ### bamMods
@@ -81,9 +93,21 @@ Extract detailed modification data for each read.
 ```typescript
 import { bamMods } from '@nanalogue/node';
 
-const mods = await bamMods({ bamPath: 'example.bam' });
-// Returns array of records with modification tables containing
-// position, reference position, and probability for each modification
+const mods = await bamMods({ bamPath: 'tests/data/examples/example_1.bam' });
+console.log(mods[0]);
+// Output (first read):
+// {
+//   alignment_type: 'primary_forward',
+//   alignment: { start: 9, end: 17, contig: 'dummyI', contig_id: 0 },
+//   mod_table: [{
+//     base: 'T',
+//     is_strand_plus: true,
+//     mod_code: 'T',
+//     data: [[0, 9, 4], [3, 12, 7], [4, 13, 9], [7, 16, 6]]  // [seq_pos, ref_pos, prob]
+//   }],
+//   read_id: '5d10eb9a-aae1-4db8-8ec6-7ebb34d32575',
+//   seq_len: 8
+// }
 ```
 
 ### windowReads
@@ -94,11 +118,16 @@ Compute windowed modification densities across reads.
 import { windowReads } from '@nanalogue/node';
 
 const tsv = await windowReads({
-  bamPath: 'example.bam',
-  win: 100,  // window size in bases
-  step: 50   // step size
+  bamPath: 'tests/data/examples/example_1.bam',
+  win: 2,
+  step: 1
 });
-// Returns TSV string with windowed modification densities
+console.log(tsv.split('\n').slice(0, 4).join('\n'));
+// Output (first 3 data rows):
+// #contig	ref_win_start	ref_win_end	read_id	win_val	strand	base	mod_strand	mod_type	win_start	win_end	basecall_qual
+// dummyI	9	13	5d10eb9a-aae1-4db8-8ec6-7ebb34d32575	0	+	T	+	T	0	4	255
+// dummyI	12	14	5d10eb9a-aae1-4db8-8ec6-7ebb34d32575	0	+	T	+	T	3	5	255
+// (basecall_qual is 255 as base quality scores are unavailable in this example file)
 ```
 
 Supports `winOp: 'grad_density'` for gradient mode.
@@ -111,10 +140,14 @@ Extract sequences and qualities for a genomic region.
 import { seqTable } from '@nanalogue/node';
 
 const tsv = await seqTable({
-  bamPath: 'example.bam',
-  region: 'chr1:1000-2000'  // region is required
+  bamPath: 'tests/data/examples/example_pynanalogue_1.bam',
+  region: 'contig_00000:0-10'  // region is required
 });
-// Returns TSV with read_id, sequence, qualities columns
+console.log(tsv);
+// Output:
+// read_id	sequence	qualities
+// 1...	ACGTACGTAC	30.30.30.30.30.30.30.30.30.30
+// 0...	AZGTAZGTAZ	20.20.20.20.20.20.20.20.20.20
 // Sequence uses: . for deletion, lowercase for insertion, Z for modification
 ```
 
