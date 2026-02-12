@@ -197,6 +197,13 @@ pub struct ReadOptions {
     pub base_qual_filter_mod: Option<u8>,
     /// Genomic region for modification filtering.
     pub mod_region: Option<String>,
+    /// Maximum number of records to return. Must be > 0 if set. If omitted, returns all records.
+    pub limit: Option<i64>,
+    /// Number of records to skip before returning results. Must be >= 0 if set. Defaults to 0.
+    pub offset: Option<i64>,
+    /// Seed for deterministic sampling. Required for stable pagination with `sample_fraction`.
+    /// Must be non-negative if set.
+    pub sample_seed: Option<i64>,
 }
 
 /// Returns read information as JSON array.
@@ -216,22 +223,21 @@ pub async fn read_info(options: ReadOptions) -> Result<serde_json::Value> {
 
 /// Synchronous implementation of `read_info` that runs on a blocking thread.
 fn read_info_sync(options: &ReadOptions) -> Result<serde_json::Value> {
+    let (offset, limit) = validate_pagination(options)?;
     let (mut bam, mut mods) = build_input_options(options)?;
 
     let mut reader = load_bam(&bam)?;
     let bam_rc_records = BamRcRecords::new(&mut reader, &mut bam, &mut mods)
         .map_err(|e| Error::from_reason(format!("Failed to read BAM records: {e}")))?;
 
+    let filtered = bam_rc_records
+        .rc_records
+        .filter(|r| r.as_ref().map_or(true, |v| v.pre_filt(&bam)));
+    let paginated = filtered.skip(offset).take(limit);
+
     let mut buffer = Vec::new();
-    rust_read_info::run(
-        &mut buffer,
-        bam_rc_records
-            .rc_records
-            .filter(|r| r.as_ref().map_or(true, |v| v.pre_filt(&bam))),
-        mods,
-        None,
-    )
-    .map_err(|e| Error::from_reason(format!("read_info failed: {e}")))?;
+    rust_read_info::run(&mut buffer, paginated, mods, None)
+        .map_err(|e| Error::from_reason(format!("read_info failed: {e}")))?;
 
     let json_str =
         String::from_utf8(buffer).map_err(|e| Error::from_reason(format!("Invalid UTF-8: {e}")))?;
@@ -320,6 +326,14 @@ impl TryFrom<&ReadOptions> for InputBam {
         if let Some(v) = options.full_region {
             let _: &mut InputBamBuilder = builder.full_region(v);
         }
+        if let Some(v) = options.sample_seed {
+            if v < 0 {
+                return Err(Error::from_reason("sample_seed must be non-negative"));
+            }
+            #[expect(clippy::cast_sign_loss, reason = "validated non-negative above")]
+            let seed = v as u64;
+            let _: &mut InputBamBuilder = builder.sample_seed(seed);
+        }
 
         builder
             .build()
@@ -396,6 +410,34 @@ impl TryFrom<&ReadOptions> for InputMods<OptionalTag> {
             .build()
             .map_err(|e| Error::from_reason(format!("Failed to build InputMods: {e}")))
     }
+}
+
+/// Validates and returns the (offset, limit) pagination parameters as usize values.
+/// Returns `(skip_count, take_count)` suitable for `.skip().take()`.
+#[expect(
+    clippy::cast_sign_loss,
+    reason = "i64→u64 is safe after validating non-negative"
+)]
+#[expect(
+    clippy::cast_possible_truncation,
+    reason = "u64→usize is clamped with .min(usize::MAX as u64)"
+)]
+fn validate_pagination(options: &ReadOptions) -> Result<(usize, usize)> {
+    if let Some(v) = options.offset
+        && v < 0
+    {
+        return Err(Error::from_reason("offset must be non-negative"));
+    }
+    if let Some(v) = options.limit
+        && v <= 0
+    {
+        return Err(Error::from_reason("limit must be a positive integer"));
+    }
+    let offset = (options.offset.unwrap_or(0) as u64).min(usize::MAX as u64) as usize;
+    let limit = options
+        .limit
+        .map_or(usize::MAX, |n| (n as u64).min(usize::MAX as u64) as usize);
+    Ok((offset, limit))
 }
 
 /// Builds `InputBam` and `InputMods` from the given options.
@@ -490,19 +532,23 @@ pub async fn bam_mods(options: ReadOptions) -> Result<serde_json::Value> {
 
 /// Synchronous implementation of `bam_mods`.
 fn bam_mods_sync(options: &ReadOptions) -> Result<serde_json::Value> {
+    let (offset, limit) = validate_pagination(options)?;
     let (mut bam, mut mods) = build_input_options(options)?;
 
     let mut reader = load_bam(&bam)?;
     let bam_rc_records = BamRcRecords::new(&mut reader, &mut bam, &mut mods)
         .map_err(|e| Error::from_reason(format!("Failed to read BAM records: {e}")))?;
 
+    let filtered = bam_rc_records
+        .rc_records
+        .filter(|r| r.as_ref().map_or(true, |v| v.pre_filt(&bam)));
+    let paginated = filtered.skip(offset).take(limit);
+
     let mut buffer = Vec::new();
     // Use detailed mode (Some(false) = compact JSON, Some(true) = pretty JSON)
     rust_read_info::run(
         &mut buffer,
-        bam_rc_records
-            .rc_records
-            .filter(|r| r.as_ref().map_or(true, |v| v.pre_filt(&bam))),
+        paginated,
         mods,
         Some(false), // detailed=true, pretty=false
     )
@@ -568,9 +614,18 @@ pub struct WindowOptions {
     pub base_qual_filter_mod: Option<u8>,
     /// Genomic region for modification filtering.
     pub mod_region: Option<String>,
+    /// Maximum number of records to return. Must be > 0 if set. If omitted, returns all records.
+    pub limit: Option<i64>,
+    /// Number of records to skip before returning results. Must be >= 0 if set. Defaults to 0.
+    pub offset: Option<i64>,
+    /// Seed for deterministic sampling. Required for stable pagination with `sample_fraction`.
+    /// Must be non-negative if set.
+    pub sample_seed: Option<i64>,
 }
 
 impl From<&WindowOptions> for ReadOptions {
+    // NOTE: When adding fields to WindowOptions, ensure they are mirrored here.
+    // Fields: limit, offset, sample_seed, and all filtering options must be propagated.
     fn from(opts: &WindowOptions) -> Self {
         Self {
             bam_path: opts.bam_path.clone(),
@@ -593,6 +648,9 @@ impl From<&WindowOptions> for ReadOptions {
             trim_read_ends_mod: opts.trim_read_ends_mod,
             base_qual_filter_mod: opts.base_qual_filter_mod,
             mod_region: opts.mod_region.clone(),
+            limit: opts.limit,
+            offset: opts.offset,
+            sample_seed: opts.sample_seed,
         }
     }
 }
@@ -612,6 +670,7 @@ pub async fn window_reads(options: WindowOptions) -> Result<String> {
 /// Synchronous implementation of `window_reads`.
 fn window_reads_sync(options: &WindowOptions) -> Result<String> {
     let read_opts: ReadOptions = options.into();
+    let (offset, limit) = validate_pagination(&read_opts)?;
     let (mut bam, mut mods) = build_input_options(&read_opts)?;
 
     // Validate and build windowing options
@@ -636,24 +695,21 @@ fn window_reads_sync(options: &WindowOptions) -> Result<String> {
     let bam_rc_records = BamRcRecords::new(&mut reader, &mut bam, &mut mods)
         .map_err(|e| Error::from_reason(format!("Failed to read BAM records: {e}")))?;
 
+    let filtered = bam_rc_records
+        .rc_records
+        .filter(|r| r.as_ref().map_or(true, |v| v.pre_filt(&bam)));
+    let paginated = filtered.skip(offset).take(limit);
+
     let mut buffer = Vec::new();
 
     let win_op = options.win_op.as_deref().unwrap_or("density");
     match win_op {
-        "density" => rust_window_reads::run(
-            &mut buffer,
-            bam_rc_records
-                .rc_records
-                .filter(|r| r.as_ref().map_or(true, |v| v.pre_filt(&bam))),
-            window_options,
-            &mods,
-            |x| analysis::threshold_and_mean(x).map(Into::into),
-        ),
+        "density" => rust_window_reads::run(&mut buffer, paginated, window_options, &mods, |x| {
+            analysis::threshold_and_mean(x).map(Into::into)
+        }),
         "grad_density" => rust_window_reads::run(
             &mut buffer,
-            bam_rc_records
-                .rc_records
-                .filter(|r| r.as_ref().map_or(true, |v| v.pre_filt(&bam))),
+            paginated,
             window_options,
             &mods,
             analysis::threshold_and_gradient,
@@ -685,6 +741,8 @@ pub async fn seq_table(options: ReadOptions) -> Result<String> {
 
 /// Synchronous implementation of `seq_table`.
 fn seq_table_sync(options: &ReadOptions) -> Result<String> {
+    let (offset, limit) = validate_pagination(options)?;
+
     // Region is required for seq_table
     let region_str = options.region.as_ref().ok_or_else(|| {
         Error::from_reason("region parameter is required for seq_table (cannot be empty)")
@@ -738,18 +796,15 @@ fn seq_table_sync(options: &ReadOptions) -> Result<String> {
         show_mod_z: true,
     };
 
+    let filtered = bam_rc_records
+        .rc_records
+        .filter(|r| r.as_ref().map_or(true, |v| v.pre_filt(&bam)));
+    let paginated = filtered.skip(offset).take(limit);
+
     let mut buffer = Vec::new();
 
-    rust_reads_table::run(
-        &mut buffer,
-        bam_rc_records
-            .rc_records
-            .filter(|r| r.as_ref().map_or(true, |v| v.pre_filt(&bam))),
-        Some(mods),
-        seq_display,
-        "",
-    )
-    .map_err(|e| Error::from_reason(format!("seq_table failed: {e}")))?;
+    rust_reads_table::run(&mut buffer, paginated, Some(mods), seq_display, "")
+        .map_err(|e| Error::from_reason(format!("seq_table failed: {e}")))?;
 
     let full_tsv =
         String::from_utf8(buffer).map_err(|e| Error::from_reason(format!("Invalid UTF-8: {e}")))?;

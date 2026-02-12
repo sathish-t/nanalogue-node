@@ -77,6 +77,12 @@ interface BaseReadOptionsCore {
   baseQualFilterMod?: number;
   /** Genomic region for modification filtering. */
   modRegion?: string;
+  /** Maximum number of records to return. Must be > 0 if set. If omitted, returns all records. */
+  limit?: number;
+  /** Number of records to skip before returning results. Must be >= 0 if set. Defaults to 0. */
+  offset?: number;
+  /** Seed for deterministic sampling. Required for stable pagination with sampleFraction. */
+  sampleSeed?: number;
 }
 
 /**
@@ -201,6 +207,12 @@ interface BaseWindowOptionsCore {
   baseQualFilterMod?: number;
   /** Genomic region for modification filtering. */
   modRegion?: string;
+  /** Maximum number of records to return. Must be > 0 if set. If omitted, returns all records. */
+  limit?: number;
+  /** Number of records to skip before returning results. Must be >= 0 if set. Defaults to 0. */
+  offset?: number;
+  /** Seed for deterministic sampling. Required for stable pagination with sampleFraction. */
+  sampleSeed?: number;
 }
 
 /**

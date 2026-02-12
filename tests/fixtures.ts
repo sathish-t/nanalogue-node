@@ -118,6 +118,9 @@ export interface InputOptions {
   trimReadEndsMod?: number;
   baseQualFilterMod?: number;
   modRegion?: string;
+  limit?: number;
+  offset?: number;
+  sampleSeed?: number;
 }
 
 /**
