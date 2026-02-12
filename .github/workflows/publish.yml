@@ -36,8 +36,9 @@ jobs:
           echo "All versions match"
       - name: Check tag matches version
         if: github.event_name == 'release'
+        env:
+          TAG: ${{ github.event.release.tag_name }}
         run: |
-          TAG="${{ github.event.release.tag_name }}"
           TAG_V="${TAG#v}"
           V=$(jq -r '.version' package.json)
           [ "$TAG_V" = "$V" ] || { echo "Tag $TAG_V != package.json $V"; exit 1; }
@@ -226,16 +227,7 @@ jobs:
       - name: Publish to npm
         if: ${{ github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && !inputs.dry_run) }}
         run: |
-          set -e  # Fail fast if any publish fails
-
-          # Publish platform-specific packages first
-          for dir in npm/*/; do
-            echo "Publishing $(basename $dir)..."
-            cd "$dir"
-            npm publish --provenance --access public
-            cd ../..
-          done
-
-          # Publish main package
-          echo "Publishing main package..."
+          # The prepublishOnly hook runs `napi pre-publish` which handles
+          # publishing all platform-specific packages before the main package.
+          # We only need to run npm publish once on the main package.
           npm publish --provenance --access public
