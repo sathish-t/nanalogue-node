@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-02-12
+
+### Added
+- Pagination support (`limit`, `offset`) for `readInfo`, `bamMods`, `windowReads`, and `seqTable`
+- `sampleSeed` parameter for deterministic sampling with pagination
+- 20 new pagination tests in `tests/pagination.test.ts`
+
+### Changed
+- Bump `nanalogue_core` from 0.1.7 to 0.1.8 (adds seeding for deterministic subsampling)
+
 ## [0.1.2] - 2026-02-05
 
 ### Fixed
