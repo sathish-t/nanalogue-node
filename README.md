@@ -28,6 +28,7 @@ in a BAM file in the mod BAM format (using MM/ML tags as specified in the
   - [seqTable](#seqtable)
   - [simulateModBam](#simulatemodbam)
 - [TypeScript Support](#typescript-support)
+- [Pagination](#pagination)
 - [Filtering Options](#filtering-options)
 - [Further Documentation](#further-documentation)
 - [Versioning](#versioning)
@@ -190,6 +191,57 @@ to enforce constraints at compile time (e.g., `fullRegion` can only be set when
 import type { ReadOptions, BamModRecord, ReadInfoRecord } from '@nanalogue/node';
 ```
 
+## Pagination
+
+All query functions (`readInfo`, `bamMods`, `windowReads`, `seqTable`) support pagination
+via `limit` and `offset` parameters. Pagination is applied after filtering, using lazy
+`.skip(offset).take(limit)` on the BAM record iterator, so only the requested records
+are processed.
+
+```typescript
+import { readInfo } from '@nanalogue/node';
+
+// Get the first 10 reads
+const page1 = await readInfo({
+  bamPath: 'tests/data/examples/example_1.bam',
+  limit: 10,
+  offset: 0
+});
+
+// Get the next 10 reads
+const page2 = await readInfo({
+  bamPath: 'tests/data/examples/example_1.bam',
+  limit: 10,
+  offset: 10
+});
+```
+
+When combining pagination with `sampleFraction`, use `sampleSeed` to ensure
+deterministic sampling across pages. Without a seed, each call may sample
+different reads, making pagination unstable.
+
+```typescript
+import { bamMods } from '@nanalogue/node';
+
+// Deterministic 50% subsample, paginated
+const page1 = await bamMods({
+  bamPath: 'tests/data/examples/example_1.bam',
+  sampleFraction: 0.5,
+  sampleSeed: 42,
+  limit: 10,
+  offset: 0
+});
+
+// Same seed ensures consistent ordering across pages
+const page2 = await bamMods({
+  bamPath: 'tests/data/examples/example_1.bam',
+  sampleFraction: 0.5,
+  sampleSeed: 42,
+  limit: 10,
+  offset: 10
+});
+```
+
 ## Filtering Options
 
 All read functions support extensive filtering:
@@ -206,6 +258,7 @@ All read functions support extensive filtering:
 | `mapqFilter` | Minimum mapping quality |
 | `excludeMapqUnavail` | Exclude reads without mapping quality |
 | `sampleFraction` | Subsample reads (0.0 to 1.0) |
+| `sampleSeed` | Seed for deterministic sampling (for reproducible subsampling) |
 | `threads` | Number of threads for BAM reading |
 | `tag` | Filter by modification type |
 | `modStrand` | Filter by modification strand ("bc" or "bc_comp") |
@@ -214,6 +267,8 @@ All read functions support extensive filtering:
 | `trimReadEndsMod` | Trim modification info from read ends |
 | `baseQualFilterMod` | Base quality filter for modifications |
 | `modRegion` | Genomic region for modification filtering |
+| `limit` | Maximum number of records to return (must be > 0) |
+| `offset` | Number of records to skip before returning results (default: 0) |
 
 ## Further Documentation
 
