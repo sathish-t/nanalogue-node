@@ -120,6 +120,49 @@ describe('TestWindowReadsBamFiltering', () => {
     }
   });
 
+  it('test_sample_seed_determinism', async () => {
+    const base = createWindowInputOptions(simpleBamPath, 5);
+
+    // Two calls with same sampleFraction and sampleSeed should return identical results
+    const result1 = await windowReads({
+      ...base,
+      sampleFraction: 0.5,
+      sampleSeed: 42,
+    });
+    const result2 = await windowReads({
+      ...base,
+      sampleFraction: 0.5,
+      sampleSeed: 42,
+    });
+
+    const readIds1 = getUniqueReadIds(result1);
+    const readIds2 = getUniqueReadIds(result2);
+
+    expect(readIds1).toEqual(readIds2);
+  });
+
+  it('test_sample_seed_different_seeds_differ', async () => {
+    const base = createWindowInputOptions(simpleBamPath, 5);
+
+    // Two calls with different seeds should produce different sampled sets
+    const result1 = await windowReads({
+      ...base,
+      sampleFraction: 0.5,
+      sampleSeed: 42,
+    });
+    const result2 = await windowReads({
+      ...base,
+      sampleFraction: 0.5,
+      sampleSeed: 99,
+    });
+
+    const readIds1 = getUniqueReadIds(result1);
+    const readIds2 = getUniqueReadIds(result2);
+
+    // With 1000 reads at 50% sampling, extremely unlikely to get same set
+    expect(readIds1).not.toEqual(readIds2);
+  });
+
   it('test_different_region_filters', async () => {
     const base = createWindowInputOptions(simpleBamPath, 5);
 
@@ -429,4 +472,106 @@ describe('TestWindowReadsWindowingParams', () => {
     expect(count2).toBeGreaterThan(count4);
     expect(count3).toBeGreaterThan(count4);
   });
+});
+
+describe('TestPaginationWithFiltering', () => {
+  let tmpDir: string;
+  let simpleBamPath: string;
+
+  beforeAll(async () => {
+    tmpDir = await mkdtemp(join(tmpdir(), 'nanalogue-windowreads-pagfilter-'));
+    simpleBamPath = await createSimpleBam(tmpDir);
+  });
+
+  afterAll(async () => {
+    await rm(tmpDir, { recursive: true });
+  });
+
+  it('test_limit_with_filter', async () => {
+    const base = createWindowInputOptions(simpleBamPath, 5);
+
+    // Get all primary reads
+    const allPrimary = await windowReads({
+      ...base,
+      readFilter: 'primary_forward,primary_reverse',
+    });
+    const allPrimaryReadIds = getUniqueReadIds(allPrimary);
+    expect(allPrimaryReadIds.length).toBeGreaterThan(3);
+
+    // Get limited primary reads (limit is by read count, not row count)
+    const limited = await windowReads({
+      ...base,
+      readFilter: 'primary_forward,primary_reverse',
+      limit: 3,
+    });
+    const limitedReadIds = getUniqueReadIds(limited);
+
+    expect(limitedReadIds).toHaveLength(3);
+  });
+
+  it('test_pagination_loop_with_filter', async () => {
+    const base = createWindowInputOptions(simpleBamPath, 5);
+
+    // Get all primary reads without pagination
+    const allPrimary = await windowReads({
+      ...base,
+      readFilter: 'primary_forward,primary_reverse',
+    });
+    const allPrimaryReadIds = getUniqueReadIds(allPrimary);
+    expect(allPrimaryReadIds.length).toBeGreaterThan(0);
+
+    // Paginate through primary reads
+    const PAGE_SIZE = 100;
+    const collectedReadIds: string[] = [];
+    let offset = 0;
+
+    while (true) {
+      const page = await windowReads({
+        ...base,
+        readFilter: 'primary_forward,primary_reverse',
+        limit: PAGE_SIZE,
+        offset,
+      });
+      const pageReadIds = getUniqueReadIds(page);
+      collectedReadIds.push(...pageReadIds);
+      if (pageReadIds.length < PAGE_SIZE) break;
+      offset += PAGE_SIZE;
+    }
+
+    expect(collectedReadIds).toEqual(allPrimaryReadIds);
+  }, 60_000);
+
+  it('test_sample_seed_pagination_stability', async () => {
+    const base = createWindowInputOptions(simpleBamPath, 5);
+
+    // Get all sampled reads with seed
+    const allSampled = await windowReads({
+      ...base,
+      sampleFraction: 0.5,
+      sampleSeed: 42,
+    });
+    const allSampledReadIds = getUniqueReadIds(allSampled);
+    expect(allSampledReadIds.length).toBeGreaterThan(0);
+
+    // Paginate through same sampled set
+    const PAGE_SIZE = 100;
+    const collectedReadIds: string[] = [];
+    let offset = 0;
+
+    while (true) {
+      const page = await windowReads({
+        ...base,
+        sampleFraction: 0.5,
+        sampleSeed: 42,
+        limit: PAGE_SIZE,
+        offset,
+      });
+      const pageReadIds = getUniqueReadIds(page);
+      collectedReadIds.push(...pageReadIds);
+      if (pageReadIds.length < PAGE_SIZE) break;
+      offset += PAGE_SIZE;
+    }
+
+    expect(collectedReadIds).toEqual(allSampledReadIds);
+  }, 60_000);
 });

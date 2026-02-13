@@ -116,6 +116,56 @@ describe('TestInputBamFiltering', () => {
     }
   });
 
+  it('test_sample_seed_determinism', async () => {
+    const base = createSeqTableInputOptions(
+      simpleBamPath,
+      'contig_00000:4000-6000',
+    );
+
+    // Two calls with same sampleFraction and sampleSeed should return identical results
+    const result1 = await seqTable({
+      ...base,
+      sampleFraction: 0.5,
+      sampleSeed: 42,
+    });
+    const result2 = await seqTable({
+      ...base,
+      sampleFraction: 0.5,
+      sampleSeed: 42,
+    });
+
+    const readIds1 = getUniqueReadIds(result1);
+    const readIds2 = getUniqueReadIds(result2);
+
+    // seqTable row order is not guaranteed, so compare sorted
+    expect(readIds1.sort()).toEqual(readIds2.sort());
+  });
+
+  it('test_sample_seed_different_seeds_differ', async () => {
+    const base = createSeqTableInputOptions(
+      simpleBamPath,
+      'contig_00000:4000-6000',
+    );
+
+    // Two calls with different seeds should produce different sampled sets
+    const result1 = await seqTable({
+      ...base,
+      sampleFraction: 0.5,
+      sampleSeed: 42,
+    });
+    const result2 = await seqTable({
+      ...base,
+      sampleFraction: 0.5,
+      sampleSeed: 99,
+    });
+
+    const readIds1 = getUniqueReadIds(result1);
+    const readIds2 = getUniqueReadIds(result2);
+
+    // With 1000 reads at 50% sampling, extremely unlikely to get same set
+    expect(readIds1.sort()).not.toEqual(readIds2.sort());
+  });
+
   it('test_read_filter_primary_only', async () => {
     const base = createSeqTableInputOptions(
       simpleBamPath,
@@ -405,4 +455,121 @@ describe('TestExcludeMapqUnavail', () => {
     expect(countWithoutFlag).toBeGreaterThan(0);
     expect(countWithFlag).toBe(0);
   });
+});
+
+describe('TestPaginationWithFiltering', () => {
+  let tmpDir: string;
+  let simpleBamPath: string;
+
+  beforeAll(async () => {
+    tmpDir = await mkdtemp(join(tmpdir(), 'nanalogue-seqtable-pagfilter-'));
+    simpleBamPath = await createSimpleBam(tmpDir);
+  });
+
+  afterAll(async () => {
+    await rm(tmpDir, { recursive: true });
+  });
+
+  it('test_limit_with_filter', async () => {
+    const base = createSeqTableInputOptions(
+      simpleBamPath,
+      'contig_00000:4000-6000',
+    );
+
+    // Get all primary reads
+    const allPrimary = await seqTable({
+      ...base,
+      readFilter: 'primary_forward,primary_reverse',
+    });
+    const allPrimaryCount = getRowCount(allPrimary);
+    expect(allPrimaryCount).toBeGreaterThan(3);
+
+    // Get limited primary reads
+    const limited = await seqTable({
+      ...base,
+      readFilter: 'primary_forward,primary_reverse',
+      limit: 3,
+    });
+    const { rows } = parseTsv(limited);
+
+    expect(rows).toHaveLength(3);
+  });
+
+  it('test_pagination_loop_with_filter', async () => {
+    const base = createSeqTableInputOptions(
+      simpleBamPath,
+      'contig_00000:4000-6000',
+    );
+
+    // Get all primary reads without pagination
+    const allPrimary = await seqTable({
+      ...base,
+      readFilter: 'primary_forward,primary_reverse',
+    });
+    const allPrimaryParsed = parseTsv(allPrimary);
+    expect(allPrimaryParsed.rows.length).toBeGreaterThan(0);
+
+    // Paginate through primary reads
+    const PAGE_SIZE = 50;
+    const collectedRows: Record<string, string>[] = [];
+    let offset = 0;
+
+    while (true) {
+      const page = await seqTable({
+        ...base,
+        readFilter: 'primary_forward,primary_reverse',
+        limit: PAGE_SIZE,
+        offset,
+      });
+      const { rows } = parseTsv(page);
+      collectedRows.push(...rows);
+      if (rows.length < PAGE_SIZE) break;
+      offset += PAGE_SIZE;
+    }
+
+    // seqTable row order is not guaranteed, compare sorted
+    expect(collectedRows.map((r) => r.read_id).sort()).toEqual(
+      allPrimaryParsed.rows.map((r) => r.read_id).sort(),
+    );
+  }, 60_000);
+
+  it('test_sample_seed_pagination_stability', async () => {
+    const base = createSeqTableInputOptions(
+      simpleBamPath,
+      'contig_00000:4000-6000',
+    );
+
+    // Get all sampled reads with seed
+    const allSampled = await seqTable({
+      ...base,
+      sampleFraction: 0.5,
+      sampleSeed: 42,
+    });
+    const allSampledParsed = parseTsv(allSampled);
+    expect(allSampledParsed.rows.length).toBeGreaterThan(0);
+
+    // Paginate through same sampled set
+    const PAGE_SIZE = 50;
+    const collectedRows: Record<string, string>[] = [];
+    let offset = 0;
+
+    while (true) {
+      const page = await seqTable({
+        ...base,
+        sampleFraction: 0.5,
+        sampleSeed: 42,
+        limit: PAGE_SIZE,
+        offset,
+      });
+      const { rows } = parseTsv(page);
+      collectedRows.push(...rows);
+      if (rows.length < PAGE_SIZE) break;
+      offset += PAGE_SIZE;
+    }
+
+    // seqTable row order is not guaranteed, compare sorted
+    expect(collectedRows.map((r) => r.read_id).sort()).toEqual(
+      allSampledParsed.rows.map((r) => r.read_id).sort(),
+    );
+  }, 60_000);
 });

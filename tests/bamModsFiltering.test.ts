@@ -116,6 +116,49 @@ describe('TestInputBamFiltering', () => {
     }
   });
 
+  it('test_sample_seed_determinism', async () => {
+    const base = createInputOptions(simpleBamPath);
+
+    // Two calls with same sampleFraction and sampleSeed should return identical results
+    const result1 = await bamMods({
+      ...base,
+      sampleFraction: 0.5,
+      sampleSeed: 42,
+    });
+    const result2 = await bamMods({
+      ...base,
+      sampleFraction: 0.5,
+      sampleSeed: 42,
+    });
+
+    const readIds1 = getUniqueReadIdsFromRecords(result1);
+    const readIds2 = getUniqueReadIdsFromRecords(result2);
+
+    expect(readIds1).toEqual(readIds2);
+  });
+
+  it('test_sample_seed_different_seeds_differ', async () => {
+    const base = createInputOptions(simpleBamPath);
+
+    // Two calls with different seeds should produce different sampled sets
+    const result1 = await bamMods({
+      ...base,
+      sampleFraction: 0.5,
+      sampleSeed: 42,
+    });
+    const result2 = await bamMods({
+      ...base,
+      sampleFraction: 0.5,
+      sampleSeed: 99,
+    });
+
+    const readIds1 = getUniqueReadIdsFromRecords(result1);
+    const readIds2 = getUniqueReadIdsFromRecords(result2);
+
+    // With 1000 reads at 50% sampling, extremely unlikely to get same set
+    expect(readIds1).not.toEqual(readIds2);
+  });
+
   it('test_different_region_filters', async () => {
     const base = createInputOptions(simpleBamPath);
 
@@ -355,5 +398,108 @@ describe('TestTagFiltering', () => {
     const totalAll = getTotalModTableCount(resultAll);
 
     expect(total76792 + totalT).toBe(totalAll);
+  });
+});
+
+describe('TestPaginationWithFiltering', () => {
+  let tmpDir: string;
+  let simpleBamPath: string;
+
+  beforeAll(async () => {
+    tmpDir = await mkdtemp(join(tmpdir(), 'nanalogue-bammods-pagfilter-'));
+    simpleBamPath = await createSimpleBam(tmpDir);
+  });
+
+  afterAll(async () => {
+    await rm(tmpDir, { recursive: true });
+  });
+
+  it('test_limit_with_filter', async () => {
+    const base = createInputOptions(simpleBamPath);
+
+    // Get all primary reads
+    const allPrimary = await bamMods({
+      ...base,
+      readFilter: 'primary_forward,primary_reverse',
+    });
+    expect(allPrimary.length).toBeGreaterThan(3);
+
+    // Get limited primary reads
+    const limited = await bamMods({
+      ...base,
+      readFilter: 'primary_forward,primary_reverse',
+      limit: 3,
+    });
+
+    expect(limited).toHaveLength(3);
+    for (const record of limited) {
+      expect(record.alignment_type).toMatch(/primary/);
+    }
+  });
+
+  it('test_pagination_loop_with_filter', async () => {
+    const base = createInputOptions(simpleBamPath);
+
+    // Get all primary reads without pagination
+    const allPrimary = await bamMods({
+      ...base,
+      readFilter: 'primary_forward,primary_reverse',
+    });
+    expect(allPrimary.length).toBeGreaterThan(0);
+
+    // Paginate through primary reads
+    const PAGE_SIZE = 50;
+    const collected: BamModRecord[] = [];
+    let offset = 0;
+
+    while (true) {
+      const page = await bamMods({
+        ...base,
+        readFilter: 'primary_forward,primary_reverse',
+        limit: PAGE_SIZE,
+        offset,
+      });
+      collected.push(...page);
+      if (page.length < PAGE_SIZE) break;
+      offset += PAGE_SIZE;
+    }
+
+    expect(collected.map((r) => r.read_id)).toEqual(
+      allPrimary.map((r) => r.read_id),
+    );
+  });
+
+  it('test_sample_seed_pagination_stability', async () => {
+    const base = createInputOptions(simpleBamPath);
+
+    // Get all sampled reads with seed
+    const allSampled = await bamMods({
+      ...base,
+      sampleFraction: 0.5,
+      sampleSeed: 42,
+    });
+    expect(allSampled.length).toBeGreaterThan(0);
+
+    // Paginate through same sampled set
+    const PAGE_SIZE = 100;
+    const collected: BamModRecord[] = [];
+    let offset = 0;
+
+    while (true) {
+      const page = await bamMods({
+        ...base,
+        sampleFraction: 0.5,
+        sampleSeed: 42,
+        limit: PAGE_SIZE,
+        offset,
+      });
+      collected.push(...page);
+      if (page.length < PAGE_SIZE) break;
+      offset += PAGE_SIZE;
+    }
+
+    expect(collected.map((r) => r.read_id)).toEqual(
+      allSampled.map((r) => r.read_id),
+    );
   });
 });
