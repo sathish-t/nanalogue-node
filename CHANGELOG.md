@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Regenerate `package-lock.json` so platform optional dependencies include version, resolved URL, and integrity hash (fixes `npm ci` failure)
+
 ## [0.1.3] - 2026-02-12
 
 ### Added
