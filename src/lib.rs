@@ -655,7 +655,7 @@ impl From<&WindowOptions> for ReadOptions {
     }
 }
 
-/// Windows modification data along reads and returns TSV as string.
+/// Windows modification data along reads and returns JSON as string.
 ///
 /// # Errors
 /// Returns an error if window/step size is invalid, BAM reading fails,
@@ -704,10 +704,12 @@ fn window_reads_sync(options: &WindowOptions) -> Result<String> {
 
     let win_op = options.win_op.as_deref().unwrap_or("density");
     match win_op {
-        "density" => rust_window_reads::run(&mut buffer, paginated, window_options, &mods, |x| {
-            analysis::threshold_and_mean(x).map(Into::into)
-        }),
-        "grad_density" => rust_window_reads::run(
+        "density" => {
+            rust_window_reads::run_json(&mut buffer, paginated, window_options, &mods, |x| {
+                analysis::threshold_and_mean(x).map(Into::into)
+            })
+        }
+        "grad_density" => rust_window_reads::run_json(
             &mut buffer,
             paginated,
             window_options,

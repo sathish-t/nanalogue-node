@@ -4630,9 +4630,9 @@ dependencies = [
 
 [[package]]
 name = "nanalogue"
-version = "0.1.8"
+version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c1258b610c4bdeca43e0ee23f1471520d933e11a84f46b90093f8be4d38497ca"
+checksum = "69b49ac80c2690d4bd3133ab2e80aeb1814a7a83edd8293b4c9245fb092c3c01"
 dependencies = [
  "bedrs",
  "bio 3.0.0",
@@ -4658,7 +4658,7 @@ dependencies = [
 
 [[package]]
 name = "nanalogue-node"
-version = "0.1.3"
+version = "0.1.4"
 dependencies = [
  "csv",
  "nanalogue",

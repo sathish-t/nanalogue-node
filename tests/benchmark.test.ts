@@ -9,7 +9,6 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { bamMods, readInfo, windowReads } from '../index';
 import { createBenchmarkBam } from './fixtures';
-import { getRowCount } from './helpers';
 
 describe('Benchmark Tests', () => {
   let tmpDir: string;
@@ -53,7 +52,7 @@ describe('Benchmark Tests', () => {
     });
 
     // Verify we got results
-    const rowCount = getRowCount(result);
-    expect(rowCount).toBeGreaterThan(0);
+    const entries = JSON.parse(result) as unknown[];
+    expect(entries.length).toBeGreaterThan(0);
   }, 30000); // 30 second timeout
 });

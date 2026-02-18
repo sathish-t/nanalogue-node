@@ -171,23 +171,47 @@ Compute windowed modification densities across reads.
 ```typescript
 import { windowReads } from '@nanalogue/node';
 
-const tsv = await windowReads({
+const json = await windowReads({
   bamPath: 'tests/data/examples/example_1.bam',
   win: 2,
   step: 1
 });
-console.log(tsv.split('\n').slice(0, 3).join('\n'));
+const entries = JSON.parse(json);
+console.log(JSON.stringify(entries[0], null, 2));
 ```
 <!-- TEST CODE: END windowReads -->
 
-The output is TSV with a header row and data rows.
-(basecall\_qual is 255 as base quality scores are unavailable in this example file.)
+The output is a JSON array of per-read entries. Each entry contains alignment
+info and a `mod_table` with windowed data tuples
+`[win_start, win_end, win_val, mean_base_qual, ref_win_start, ref_win_end]`.
+(mean\_base\_qual is 255 as base quality scores are unavailable in this example file.).
+NOTE: If the `alignment_type` is "unmapped", then the `alignment` field is not present.
 
 <!-- TEST OUTPUT: START windowReads -->
-```text
-#contig	ref_win_start	ref_win_end	read_id	win_val	strand	base	mod_strand	mod_type	win_start	win_end	basecall_qual
-dummyI	9	13	5d10eb9a-aae1-4db8-8ec6-7ebb34d32575	0	+	T	+	T	0	4	255
-dummyI	12	14	5d10eb9a-aae1-4db8-8ec6-7ebb34d32575	0	+	T	+	T	3	5	255
+```json
+{
+  "alignment_type": "primary_forward",
+  "alignment": {
+    "start": 9,
+    "end": 17,
+    "contig": "dummyI",
+    "contig_id": 0
+  },
+  "mod_table": [
+    {
+      "base": "T",
+      "is_strand_plus": true,
+      "mod_code": "T",
+      "data": [
+        [0, 4, 0.0, 255, 9, 13],
+        [3, 5, 0.0, 255, 12, 14],
+        [4, 8, 0.0, 255, 13, 17]
+      ]
+    }
+  ],
+  "read_id": "5d10eb9a-aae1-4db8-8ec6-7ebb34d32575",
+  "seq_len": 8
+}
 ```
 <!-- TEST OUTPUT: END windowReads -->
 

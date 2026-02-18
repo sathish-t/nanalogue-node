@@ -15,7 +15,7 @@ import {
   windowReads,
 } from '../index';
 import { createSimpleBam, EXAMPLE_3_BAM } from './fixtures';
-import { getUniqueReadIds, parseTsv } from './helpers';
+import { getUniqueReadIdsFromWindowJson, parseTsv } from './helpers';
 
 // example_3.bam has 10 reads on contig "dummyI" (no modifications)
 const bamPath = EXAMPLE_3_BAM;
@@ -122,7 +122,7 @@ describe('windowReads pagination', () => {
       step: 1,
       limit: 1,
     });
-    const readIds = getUniqueReadIds(result);
+    const readIds = getUniqueReadIdsFromWindowJson(result);
     expect(readIds).toHaveLength(1);
   });
 
@@ -132,7 +132,7 @@ describe('windowReads pagination', () => {
       win: 2,
       step: 1,
     });
-    const allReadIds = getUniqueReadIds(all);
+    const allReadIds = getUniqueReadIdsFromWindowJson(all);
     expect(allReadIds.length).toBeGreaterThan(0);
 
     const PAGE_SIZE = 100;
@@ -147,7 +147,7 @@ describe('windowReads pagination', () => {
         limit: PAGE_SIZE,
         offset,
       });
-      const pageReadIds = getUniqueReadIds(page);
+      const pageReadIds = getUniqueReadIdsFromWindowJson(page);
       collectedReadIds.push(...pageReadIds);
       if (pageReadIds.length < PAGE_SIZE) break;
       offset += PAGE_SIZE;

@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.4] - 2026-02-18
+
+### Changed
+- `windowReads` now returns JSON instead of TSV for richer structured output (includes `mod_table` with per-read modification details)
+- Bump `nanalogue_core` from 0.1.8 to 0.1.9 (adds `run_json` for JSON window output)
+- Expected output fixtures migrated from TSV to JSON format
+
+### Added
+- Test helpers and expected outputs for JSON-based `windowReads` (including no-modification case)
+
 ### Fixed
 - Regenerate `package-lock.json` so platform optional dependencies include version, resolved URL, and integrity hash (fixes `npm ci` failure)
 

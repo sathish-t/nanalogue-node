@@ -44,7 +44,7 @@ describe('TestReturnTypes', () => {
     expect(Array.isArray(result)).toBe(true);
   });
 
-  it('windowReads returns string (TSV)', async () => {
+  it('windowReads returns string (JSON)', async () => {
     const result = await windowReads({
       bamPath: simpleBamPath,
       win: 5,
@@ -190,29 +190,31 @@ describe('TestOutputSchema', () => {
     expect(typeof record.seq_len).toBe('number');
   });
 
-  it('windowReads TSV has correct columns', async () => {
+  it('windowReads JSON has correct structure', async () => {
     const result = await windowReads({
       bamPath: simpleBamPath,
       win: 5,
       step: 2,
     });
 
-    const { headers } = parseTsv(result);
+    const entries = JSON.parse(result) as Record<string, unknown>[];
+    expect(Array.isArray(entries)).toBe(true);
+    expect(entries.length).toBeGreaterThan(0);
 
-    const expectedCols = [
-      'contig',
-      'ref_win_start',
-      'ref_win_end',
-      'read_id',
-      'win_val',
-      'strand',
-      'base',
-      'mod_strand',
-      'mod_type',
-    ];
+    const expectedKeys = ['alignment_type', 'mod_table', 'read_id', 'seq_len'];
 
-    for (const col of expectedCols) {
-      expect(headers).toContain(col);
+    for (const key of expectedKeys) {
+      expect(entries[0]).toHaveProperty(key);
+    }
+
+    const modTable = entries[0].mod_table as Record<string, unknown>[];
+    expect(Array.isArray(modTable)).toBe(true);
+    for (const modEntry of modTable) {
+      expect(modEntry).toHaveProperty('base');
+      expect(modEntry).toHaveProperty('is_strand_plus');
+      expect(modEntry).toHaveProperty('mod_code');
+      expect(modEntry).toHaveProperty('data');
+      expect(Array.isArray(modEntry.data)).toBe(true);
     }
   });
 

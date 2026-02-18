@@ -407,3 +407,101 @@ export function normalizeJsonForComparison(obj: unknown): unknown {
   }
   return obj;
 }
+
+// Interfaces and helper functions for windowReads JSON output.
+// Provides parsing, counting, and extraction utilities for window-based data.
+
+/**
+ * A single mod_table entry within a window read result
+ */
+export interface WindowModTableEntry {
+  base: string;
+  is_strand_plus: boolean;
+  mod_code: string;
+  data: number[][];
+}
+
+/**
+ * A single entry in the windowReads JSON output array
+ */
+export interface WindowReadEntry {
+  alignment_type: string;
+  alignment?: { start: number; end: number; contig: string; contig_id: number };
+  mod_table: WindowModTableEntry[];
+  read_id: string;
+  seq_len: number;
+}
+
+/**
+ * Parse a windowReads JSON string into typed entries
+ */
+export function parseWindowReadsJson(jsonStr: string): WindowReadEntry[] {
+  return JSON.parse(jsonStr) as WindowReadEntry[];
+}
+
+/**
+ * Get total number of data entries (windows) across all reads and mod_table entries
+ */
+export function getWindowDataCount(jsonStr: string): number {
+  const entries = parseWindowReadsJson(jsonStr);
+  let total = 0;
+  for (const entry of entries) {
+    for (const modEntry of entry.mod_table) {
+      total += modEntry.data.length;
+    }
+  }
+  return total;
+}
+
+/**
+ * Get unique read IDs from windowReads JSON, preserving order of first appearance
+ */
+export function getUniqueReadIdsFromWindowJson(jsonStr: string): string[] {
+  const entries = parseWindowReadsJson(jsonStr);
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const entry of entries) {
+    if (!seen.has(entry.read_id)) {
+      seen.add(entry.read_id);
+      result.push(entry.read_id);
+    }
+  }
+  return result;
+}
+
+/**
+ * Get unique mod_code values from all mod_table entries in windowReads JSON
+ */
+export function getUniqueModCodesFromWindowJson(jsonStr: string): string[] {
+  const entries = parseWindowReadsJson(jsonStr);
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const entry of entries) {
+    for (const modEntry of entry.mod_table) {
+      if (!seen.has(modEntry.mod_code)) {
+        seen.add(modEntry.mod_code);
+        result.push(modEntry.mod_code);
+      }
+    }
+  }
+  return result;
+}
+
+/**
+ * Count data entries for a specific read ID in windowReads JSON
+ */
+export function getWindowDataCountForReadId(
+  jsonStr: string,
+  readId: string,
+): number {
+  const entries = parseWindowReadsJson(jsonStr);
+  let total = 0;
+  for (const entry of entries) {
+    if (entry.read_id === readId) {
+      for (const modEntry of entry.mod_table) {
+        total += modEntry.data.length;
+      }
+    }
+  }
+  return total;
+}

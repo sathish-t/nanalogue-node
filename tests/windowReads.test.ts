@@ -1,12 +1,14 @@
 // Tests for windowReads function
+// Validates JSON output format, expected outputs, gradient mode, and error handling
 
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { windowReads } from '../index';
 import {
-  compareTsvSorted,
   getExampleBamPath,
-  loadExpectedTsvRaw,
+  loadExpectedJson,
+  normalizeJsonForComparison,
+  parseWindowReadsJson,
 } from './helpers';
 
 const getTestDataPath = (relativePath: string) =>
@@ -16,22 +18,31 @@ describe('windowReads expected output comparison', () => {
   it('test_example_1_bam_window_reads', async () => {
     const bamPath = getExampleBamPath('example_1.bam');
     const result = await windowReads({ bamPath, win: 2, step: 1 });
-    const expected = loadExpectedTsvRaw('example_1_window_reads');
-    expect(compareTsvSorted(result, expected)).toBe(true);
+    const actual = normalizeJsonForComparison(JSON.parse(result));
+    const expected = normalizeJsonForComparison(
+      loadExpectedJson('example_1_window_reads_json'),
+    );
+    expect(actual).toEqual(expected);
   });
 
   it('test_example_3_bam_window_reads', async () => {
     const bamPath = getExampleBamPath('example_3.bam');
     const result = await windowReads({ bamPath, win: 2, step: 1 });
-    const expected = loadExpectedTsvRaw('example_3_window_reads');
-    expect(compareTsvSorted(result, expected)).toBe(true);
+    const actual = normalizeJsonForComparison(JSON.parse(result));
+    const expected = normalizeJsonForComparison(
+      loadExpectedJson('example_3_window_reads_json'),
+    );
+    expect(actual).toEqual(expected);
   });
 
   it('test_example_7_bam_window_reads', async () => {
     const bamPath = getExampleBamPath('example_7.bam');
     const result = await windowReads({ bamPath, win: 2, step: 1 });
-    const expected = loadExpectedTsvRaw('example_7_window_reads');
-    expect(compareTsvSorted(result, expected)).toBe(true);
+    const actual = normalizeJsonForComparison(JSON.parse(result));
+    const expected = normalizeJsonForComparison(
+      loadExpectedJson('example_7_window_reads_json'),
+    );
+    expect(actual).toEqual(expected);
   });
 });
 
@@ -44,8 +55,11 @@ describe('windowReads gradient (grad_density) tests', () => {
       step: 1,
       winOp: 'grad_density',
     });
-    const expected = loadExpectedTsvRaw('example_10_win_grad_win_10_step_1');
-    expect(compareTsvSorted(result, expected)).toBe(true);
+    const actual = normalizeJsonForComparison(JSON.parse(result));
+    const expected = normalizeJsonForComparison(
+      loadExpectedJson('example_10_win_grad_json_win_10_step_1'),
+    );
+    expect(actual).toEqual(expected);
   });
 
   it('test_example_10_bam_window_reads_gradient_win20_step2', async () => {
@@ -56,8 +70,11 @@ describe('windowReads gradient (grad_density) tests', () => {
       step: 2,
       winOp: 'grad_density',
     });
-    const expected = loadExpectedTsvRaw('example_10_win_grad_win_20_step_2');
-    expect(compareTsvSorted(result, expected)).toBe(true);
+    const actual = normalizeJsonForComparison(JSON.parse(result));
+    const expected = normalizeJsonForComparison(
+      loadExpectedJson('example_10_win_grad_json_win_20_step_2'),
+    );
+    expect(actual).toEqual(expected);
   });
 
   it('test_example_11_bam_window_reads_gradient_win10_step1', async () => {
@@ -68,8 +85,11 @@ describe('windowReads gradient (grad_density) tests', () => {
       step: 1,
       winOp: 'grad_density',
     });
-    const expected = loadExpectedTsvRaw('example_11_win_grad_win_10_step_1');
-    expect(compareTsvSorted(result, expected)).toBe(true);
+    const actual = normalizeJsonForComparison(JSON.parse(result));
+    const expected = normalizeJsonForComparison(
+      loadExpectedJson('example_11_win_grad_json_win_10_step_1'),
+    );
+    expect(actual).toEqual(expected);
   });
 
   it('test_example_11_bam_window_reads_gradient_win20_step2', async () => {
@@ -80,8 +100,11 @@ describe('windowReads gradient (grad_density) tests', () => {
       step: 2,
       winOp: 'grad_density',
     });
-    const expected = loadExpectedTsvRaw('example_11_win_grad_win_20_step_2');
-    expect(compareTsvSorted(result, expected)).toBe(true);
+    const actual = normalizeJsonForComparison(JSON.parse(result));
+    const expected = normalizeJsonForComparison(
+      loadExpectedJson('example_11_win_grad_json_win_20_step_2'),
+    );
+    expect(actual).toEqual(expected);
   });
 });
 
@@ -102,7 +125,7 @@ describe('windowReads error handling', () => {
 describe('windowReads', () => {
   const testBamPath = getTestDataPath('examples/example_1.bam');
 
-  it('returns TSV output with header', async () => {
+  it('returns valid JSON array', async () => {
     const result = await windowReads({
       bamPath: testBamPath,
       win: 2,
@@ -112,27 +135,37 @@ describe('windowReads', () => {
     expect(typeof result).toBe('string');
     expect(result.length).toBeGreaterThan(0);
 
-    // Should start with a header line
-    const lines = result.split('\n');
-    expect(lines[0].startsWith('#')).toBe(true);
-    expect(lines[0]).toContain('contig');
-    expect(lines[0]).toContain('read_id');
+    const entries = parseWindowReadsJson(result);
+    expect(Array.isArray(entries)).toBe(true);
+    expect(entries.length).toBeGreaterThan(0);
   });
 
-  it('returns valid TSV format', async () => {
+  it('returns entries with expected JSON structure', async () => {
     const result = await windowReads({
       bamPath: testBamPath,
       win: 2,
       step: 1,
     });
 
-    const lines = result.split('\n').filter((line) => line.length > 0);
-    const headerFields = lines[0].split('\t');
+    const entries = parseWindowReadsJson(result);
+    for (const entry of entries) {
+      expect(entry).toHaveProperty('alignment_type');
+      expect(entry).toHaveProperty('mod_table');
+      expect(entry).toHaveProperty('read_id');
+      expect(entry).toHaveProperty('seq_len');
+      expect(Array.isArray(entry.mod_table)).toBe(true);
 
-    // Check data lines have consistent column count
-    for (let i = 1; i < lines.length; i++) {
-      const dataFields = lines[i].split('\t');
-      expect(dataFields.length).toBe(headerFields.length);
+      for (const modEntry of entry.mod_table) {
+        expect(modEntry).toHaveProperty('base');
+        expect(modEntry).toHaveProperty('is_strand_plus');
+        expect(modEntry).toHaveProperty('mod_code');
+        expect(modEntry).toHaveProperty('data');
+        expect(Array.isArray(modEntry.data)).toBe(true);
+
+        for (const row of modEntry.data) {
+          expect(row).toHaveLength(6);
+        }
+      }
     }
   });
 
@@ -155,14 +188,13 @@ describe('windowReads', () => {
       region: 'dummyI',
     });
 
-    const lines = result
-      .split('\n')
-      .filter((line) => line.length > 0 && !line.startsWith('#'));
+    const entries = parseWindowReadsJson(result);
 
-    // All data lines should be for dummyI or unmapped (.)
-    for (const line of lines) {
-      const contig = line.split('\t')[0];
-      expect(['dummyI', '.']).toContain(contig);
+    // All mapped entries should have contig dummyI
+    for (const entry of entries) {
+      if (entry.alignment) {
+        expect(entry.alignment.contig).toBe('dummyI');
+      }
     }
   });
 
