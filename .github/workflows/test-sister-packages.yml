@@ -1,0 +1,66 @@
+# Tests the downstream nanalogue-gui package against the current
+# nanalogue-node commit. Non-blocking: failures surface as warnings.
+
+name: Test Sister Packages
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  test-nanalogue-gui:
+    name: nanalogue-gui (Electron + Node.js)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Checkout nanalogue-node
+        uses: actions/checkout@v6
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install nanalogue-node dependencies
+        run: npm ci
+
+      - name: Build nanalogue-node native module
+        run: npm run build
+
+      - name: Checkout nanalogue-gui
+        uses: actions/checkout@v6
+        with:
+          repository: sathish-t/nanalogue-gui
+          path: sister/nanalogue-gui
+
+      - name: Install nanalogue-gui dependencies
+        working-directory: sister/nanalogue-gui
+        run: npm ci
+
+      - name: Override @nanalogue/node with local build
+        run: |
+          target="sister/nanalogue-gui/node_modules/@nanalogue/node"
+          cp index.js index.d.ts native.d.ts "$target/"
+          cp nanalogue.linux-x64-gnu.node "$target/" 2>/dev/null || true
+          cp nanalogue.linux-x64-musl.node "$target/" 2>/dev/null || true
+
+      - name: Build nanalogue-gui
+        working-directory: sister/nanalogue-gui
+        run: npm run build
+
+      - name: Lint nanalogue-gui
+        working-directory: sister/nanalogue-gui
+        run: npm run lint
+
+      - name: Test nanalogue-gui
+        working-directory: sister/nanalogue-gui
+        run: npm test
