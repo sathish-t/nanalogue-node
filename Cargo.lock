@@ -1458,6 +1458,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "convert_case"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "affbf0190ed2caf063e3def54ff444b449371d55c58e513a95ab98eca50adb49"
+dependencies = [
+ "unicode-segmentation",
+]
+
+[[package]]
 name = "core-foundation"
 version = "0.9.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1666,6 +1675,22 @@ dependencies = [
  "quote 1.0.44",
  "syn 2.0.115",
 ]
+
+[[package]]
+name = "ctor"
+version = "0.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "95d0d11eb38e7642efca359c3cf6eb7b2e528182d09110165de70192b0352775"
+dependencies = [
+ "ctor-proc-macro",
+ "dtor",
+]
+
+[[package]]
+name = "ctor-proc-macro"
+version = "0.0.12"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a7ab264ea985f1bd27887d7b21ea2bb046728e05d11909ca138d700c494730db"
 
 [[package]]
 name = "cubecl"
@@ -2365,6 +2390,21 @@ checksum = "d4b8a88685455ed29a21542a33abd9cb6510b6b129abadabdcef0f4c55bc8f61"
 dependencies = [
  "litrs",
 ]
+
+[[package]]
+name = "dtor"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "17f72721db8027a4e96dd6fb50d2a1d32259c9d3da1b63dee612ccd981e14293"
+dependencies = [
+ "dtor-proc-macro",
+]
+
+[[package]]
+name = "dtor-proc-macro"
+version = "0.0.12"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8c98b077c7463d01d22dde8a24378ddf1ca7263dc687cffbed38819ea6c21131"
 
 [[package]]
 name = "duct"
@@ -4664,7 +4704,7 @@ dependencies = [
  "nanalogue",
  "napi",
  "napi-build",
- "napi-derive",
+ "napi-derive 3.5.4",
  "rust-htslib",
  "serde",
  "serde_json",
@@ -4688,8 +4728,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "55740c4ae1d8696773c78fdafd5d0e5fe9bc9f1b071c7ba493ba5c413a9184f3"
 dependencies = [
  "bitflags 2.10.0",
- "ctor",
- "napi-derive",
+ "ctor 0.2.9",
+ "napi-derive 2.16.13",
  "napi-sys",
  "once_cell",
  "serde",
@@ -4711,7 +4751,21 @@ checksum = "7cbe2585d8ac223f7d34f13701434b9d5f4eb9c332cccce8dee57ea18ab8ab0c"
 dependencies = [
  "cfg-if",
  "convert_case 0.6.0",
- "napi-derive-backend",
+ "napi-derive-backend 1.0.75",
+ "proc-macro2 1.0.106",
+ "quote 1.0.44",
+ "syn 2.0.115",
+]
+
+[[package]]
+name = "napi-derive"
+version = "3.5.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7430702d3cc05cf55f0a2c9e41d991c3b7a53f91e6146a8f282b1bfc7f3fd133"
+dependencies = [
+ "convert_case 0.11.0",
+ "ctor 0.10.0",
+ "napi-derive-backend 5.0.3",
  "proc-macro2 1.0.106",
  "quote 1.0.44",
  "syn 2.0.115",
@@ -4727,7 +4781,18 @@ dependencies = [
  "once_cell",
  "proc-macro2 1.0.106",
  "quote 1.0.44",
- "regex",
+ "syn 2.0.115",
+]
+
+[[package]]
+name = "napi-derive-backend"
+version = "5.0.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1ca5a083f2c9b49a0c7d33ec75c083498849c6fcc46f5497317faa39ea77f5d5"
+dependencies = [
+ "convert_case 0.11.0",
+ "proc-macro2 1.0.106",
+ "quote 1.0.44",
  "semver 1.0.27",
  "syn 2.0.115",
 ]
