@@ -39,6 +39,11 @@ jobs:
           node-version: "22"
           cache: "npm"
 
+      - name: Pin npm
+        run: |
+          npm install -g npm@11.10.0
+          npm --version
+
       - name: Install nanalogue-node dependencies
         run: npm ci
 
