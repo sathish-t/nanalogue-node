@@ -24,6 +24,9 @@ jobs:
     name: nanalogue-gui (Electron + Node.js)
     runs-on: ubuntu-latest
     continue-on-error: true
+    env:
+      CLANG_PATH: /usr/bin/clang-18
+      LIBCLANG_PATH: /usr/lib/llvm-18/lib
     steps:
       - name: Checkout nanalogue-node
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2

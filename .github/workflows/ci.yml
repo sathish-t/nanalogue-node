@@ -24,6 +24,9 @@ jobs:
   lint-and-typecheck:
     name: Lint & Typecheck
     runs-on: ubuntu-latest
+    env:
+      CLANG_PATH: /usr/bin/clang-18
+      LIBCLANG_PATH: /usr/lib/llvm-18/lib
     steps:
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -96,7 +99,15 @@ jobs:
       - name: Install npm dependencies
         run: npm ci
 
-      - name: Build native module
+      - name: Build native module (Linux)
+        if: ${{ startsWith(matrix.os, 'ubuntu') }}
+        env:
+          CLANG_PATH: /usr/bin/clang-18
+          LIBCLANG_PATH: /usr/lib/llvm-18/lib
+        run: npm run build
+
+      - name: Build native module (non-Linux)
+        if: ${{ !startsWith(matrix.os, 'ubuntu') }}
         run: npm run build
 
       - name: Run tests
@@ -124,6 +135,9 @@ jobs:
         run: npm ci
 
       - name: Build native module
+        env:
+          CLANG_PATH: /usr/bin/clang-18
+          LIBCLANG_PATH: /usr/lib/llvm-18/lib
         run: npm run build
 
       - name: Run tests
