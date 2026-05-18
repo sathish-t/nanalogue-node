@@ -8,6 +8,13 @@ on:
     - cron: "0 3 * * *" # 03:00 UTC daily
   workflow_dispatch: # Manual trigger for testing
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   ci:
     uses: ./.github/workflows/ci.yml

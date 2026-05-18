@@ -44,13 +44,13 @@ describe('TestReturnTypes', () => {
     expect(Array.isArray(result)).toBe(true);
   });
 
-  it('windowReads returns string (JSON)', async () => {
+  it('windowReads returns array', async () => {
     const result = await windowReads({
       bamPath: simpleBamPath,
       win: 5,
       step: 2,
     });
-    expect(typeof result).toBe('string');
+    expect(Array.isArray(result)).toBe(true);
   });
 
   it('seqTable returns string (TSV)', async () => {
@@ -197,7 +197,7 @@ describe('TestOutputSchema', () => {
       step: 2,
     });
 
-    const entries = JSON.parse(result) as Record<string, unknown>[];
+    const entries = result as unknown as Record<string, unknown>[];
     expect(Array.isArray(entries)).toBe(true);
     expect(entries.length).toBeGreaterThan(0);
 
@@ -303,7 +303,7 @@ describe('TestDefaultParameters', () => {
       win: 10,
       step: 5,
     });
-    expect(typeof result).toBe('string');
+    expect(Array.isArray(result)).toBe(true);
   });
 
   it('seqTable with only required parameters', async () => {

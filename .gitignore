@@ -65,6 +65,7 @@ Desktop.ini
 # ===================
 # Claude AI assistant files
 CLAUDE.md
+AGENTS.md
 .claude/
 
 # Local brainstorming notes (not for GitHub)

@@ -97,7 +97,8 @@ The output is a JSON object for the first read:
   "reference_end": 17,
   "alignment_length": 8,
   "alignment_type": "primary_forward",
-  "mod_count": "T+T:0;(probabilities >= 0.5020, PHRED base qual >= 0)"
+  "mod_count": "T+T:0;(probabilities >= 0.5020, PHRED base qual >= 0)",
+  "mapq": 255
 }
 ```
 <!-- TEST OUTPUT: END readInfo -->
@@ -158,7 +159,8 @@ The output is a JSON object for the first read. The `data` arrays contain
     }
   ],
   "read_id": "5d10eb9a-aae1-4db8-8ec6-7ebb34d32575",
-  "seq_len": 8
+  "seq_len": 8,
+  "mapq": 255
 }
 ```
 <!-- TEST OUTPUT: END bamMods -->
@@ -171,12 +173,11 @@ Compute windowed modification densities across reads.
 ```typescript
 import { windowReads } from '@nanalogue/node';
 
-const json = await windowReads({
+const entries = await windowReads({
   bamPath: 'tests/data/examples/example_1.bam',
   win: 2,
   step: 1
 });
-const entries = JSON.parse(json);
 console.log(JSON.stringify(entries[0], null, 2));
 ```
 <!-- TEST CODE: END windowReads -->

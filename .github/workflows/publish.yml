@@ -18,12 +18,21 @@ on:
 env:
   CARGO_TERM_COLOR: always
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   version-check:
     name: Verify versions match
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
       - name: Install yq
         run: sudo snap install yq
       - name: Check versions match
@@ -79,17 +88,19 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
-
-      - name: Setup Rust
-        if: ${{ !matrix.use_docker }}
-        uses: dtolnay/rust-toolchain@stable
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          targets: ${{ matrix.target }}
+          persist-credentials: false
+
+      - name: Setup Rust target
+        if: ${{ !matrix.use_docker }}
+        env:
+          TARGET: ${{ matrix.target }}
+        run: rustup target add "$TARGET"
 
       - name: Setup Node.js
         if: ${{ !matrix.use_docker }}
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
         with:
           node-version: "22"
           cache: "npm"
@@ -100,8 +111,10 @@ jobs:
 
       - name: Build native module
         if: ${{ !matrix.use_docker }}
+        env:
+          TARGET: ${{ matrix.target }}
         run: |
-          npm run build -- --target ${{ matrix.target }}
+          npm run build -- --target "$TARGET"
 
       - name: Run tests
         if: ${{ !matrix.use_docker }}
@@ -109,16 +122,22 @@ jobs:
 
       - name: Build native module (Linux via Docker)
         if: ${{ matrix.use_docker }}
+        env:
+          CONTAINER: ${{ matrix.container }}
+          TARGET: ${{ matrix.target }}
+          WORKSPACE: ${{ github.workspace }}
         run: |
           docker run --rm \
-            -v ${{ github.workspace }}:/workspace \
+            -e CONTAINER \
+            -e TARGET \
+            -v "$WORKSPACE:/workspace" \
             -w /workspace \
-            ${{ matrix.container }} \
+            "$CONTAINER" \
             bash -c '
               set -e
 
               # Install dependencies based on container type
-              if [[ "${{ matrix.container }}" == *"musllinux"* ]]; then
+              if [[ "$CONTAINER" == *"musllinux"* ]]; then
                 apk add --no-cache \
                   build-base \
                   curl \
@@ -145,7 +164,7 @@ jobs:
               # Install Rust
               curl https://sh.rustup.rs -sSf | sh -s -- -y
               . "$HOME/.cargo/env"
-              rustup target add ${{ matrix.target }}
+              rustup target add "$TARGET"
 
               # Configure linker for musl targets (Alpine gcc targets musl natively)
               export CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_LINKER=gcc
@@ -157,12 +176,12 @@ jobs:
 
               # Install npm dependencies, build, and test
               npm ci
-              npm run build -- --target ${{ matrix.target }}
+              npm run build -- --target "$TARGET"
               npm test
             '
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: bindings-${{ matrix.target }}
           path: "*.node"
@@ -178,10 +197,12 @@ jobs:
       id-token: write # OIDC trusted publishing
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
         with:
           node-version: "22"
           cache: "npm"
@@ -194,7 +215,7 @@ jobs:
         run: npm ci
 
       - name: Download all artifacts
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           path: artifacts
 

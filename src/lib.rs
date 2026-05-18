@@ -17,9 +17,7 @@ use napi_derive::napi;
 use rust_htslib::bam::FetchDefinition;
 use std::collections::{HashMap, HashSet};
 use std::num::NonZeroU32;
-use std::path::PathBuf;
 use std::str::FromStr as _;
-use url::Url;
 
 /// Result from `peek()` containing BAM file metadata.
 #[napi(object)]
@@ -58,16 +56,23 @@ pub async fn peek(options: PeekOptions) -> Result<PeekResult> {
         .map_err(|e| Error::from_reason(format!("Task join error: {e}")))?
 }
 
+/// Parses the BAM path and validates it against `treat_as_url`.
+fn parse_bam_path(bam_path: &str, treat_as_url: Option<bool>) -> Result<PathOrURLOrStdin> {
+    let parsed = PathOrURLOrStdin::from_str(bam_path)
+        .map_err(|e| Error::from_reason(format!("Invalid BAM path: {e}")))?;
+
+    match (treat_as_url, parsed) {
+        (Some(true), PathOrURLOrStdin::URL(url)) => Ok(PathOrURLOrStdin::URL(url)),
+        (Some(false) | None, PathOrURLOrStdin::Path(path)) => Ok(PathOrURLOrStdin::Path(path)),
+        (_, _) => Err(Error::from_reason(
+            "Error determining if BAM location is a file path or URL. treat_as_url=True necessary for URL",
+        )),
+    }
+}
+
 /// Synchronous implementation of peek that runs on a blocking thread.
 fn peek_sync(options: &PeekOptions) -> Result<PeekResult> {
-    // Handle treat_as_url: if true, parse as URL; otherwise treat as file path
-    let path_or_url: PathOrURLOrStdin = if options.treat_as_url == Some(true) {
-        let url = Url::parse(&options.bam_path)
-            .map_err(|e| Error::from_reason(format!("Invalid URL: {e}")))?;
-        PathOrURLOrStdin::URL(url)
-    } else {
-        PathOrURLOrStdin::Path(PathBuf::from(&options.bam_path))
-    };
+    let path_or_url = parse_bam_path(&options.bam_path, options.treat_as_url)?;
 
     let mut input_bam = InputBamBuilder::default()
         .bam_path(path_or_url)
@@ -272,14 +277,7 @@ impl TryFrom<&ReadOptions> for InputBam {
             ));
         }
 
-        // Handle treat_as_url: if true, parse as URL; otherwise treat as file path
-        let path_or_url: PathOrURLOrStdin = if options.treat_as_url == Some(true) {
-            let url = Url::parse(&options.bam_path)
-                .map_err(|e| Error::from_reason(format!("Invalid URL: {e}")))?;
-            PathOrURLOrStdin::URL(url)
-        } else {
-            PathOrURLOrStdin::Path(PathBuf::from(&options.bam_path))
-        };
+        let path_or_url = parse_bam_path(&options.bam_path, options.treat_as_url)?;
 
         let mut builder = InputBamBuilder::default();
         let _: &mut InputBamBuilder = builder.bam_path(path_or_url);
@@ -655,20 +653,20 @@ impl From<&WindowOptions> for ReadOptions {
     }
 }
 
-/// Windows modification data along reads and returns JSON as string.
+/// Windows modification data along reads and returns JSON.
 ///
 /// # Errors
 /// Returns an error if window/step size is invalid, BAM reading fails,
 /// or the windowing operation fails.
 #[napi]
-pub async fn window_reads(options: WindowOptions) -> Result<String> {
+pub async fn window_reads(options: WindowOptions) -> Result<serde_json::Value> {
     tokio::task::spawn_blocking(move || window_reads_sync(&options))
         .await
         .map_err(|e| Error::from_reason(format!("Task join error: {e}")))?
 }
 
 /// Synchronous implementation of `window_reads`.
-fn window_reads_sync(options: &WindowOptions) -> Result<String> {
+fn window_reads_sync(options: &WindowOptions) -> Result<serde_json::Value> {
     let read_opts: ReadOptions = options.into();
     let (offset, limit) = validate_pagination(&read_opts)?;
     let (mut bam, mut mods) = build_input_options(&read_opts)?;
@@ -724,7 +722,10 @@ fn window_reads_sync(options: &WindowOptions) -> Result<String> {
     }
     .map_err(|e| Error::from_reason(format!("window_reads failed: {e}")))?;
 
-    String::from_utf8(buffer).map_err(|e| Error::from_reason(format!("Invalid UTF-8: {e}")))
+    let json_str =
+        String::from_utf8(buffer).map_err(|e| Error::from_reason(format!("Invalid UTF-8: {e}")))?;
+    serde_json::from_str(&json_str)
+        .map_err(|e| Error::from_reason(format!("Failed to parse JSON: {e}")))
 }
 
 /// Returns sequence table with read info as TSV string.
@@ -815,49 +816,57 @@ fn seq_table_sync(options: &ReadOptions) -> Result<String> {
     filter_seq_table_columns(&full_tsv)
 }
 
-/// Record struct for deserializing `seq_table` TSV rows.
-/// Only the columns we need are extracted; other columns are ignored.
-#[derive(Debug, serde::Deserialize)]
-struct SeqTableRecord {
-    /// The read identifier.
-    read_id: String,
-    /// Nucleotide sequence, with `.` for deletion, lower case for insertion, and base replaced by Z (or z) for modification.
-    sequence: String,
-    /// The quality scores as a string.
-    qualities: String,
-}
-
-/// Filters TSV output to only include `read_id`, sequence, qualities columns.
+/// Filters TSV output to only include `read_id`, `sequence`, and `qualities` columns.
 /// This matches pynanalogue's `seq_table` behavior which only returns these 3 columns.
 fn filter_seq_table_columns(tsv: &str) -> Result<String> {
-    let mut rdr = csv::ReaderBuilder::new()
-        .delimiter(b'\t')
-        .has_headers(true)
-        .comment(Some(b'#'))
-        .from_reader(tsv.as_bytes());
+    let mut line_iter = tsv.lines();
 
-    let mut wtr = csv::WriterBuilder::new()
-        .delimiter(b'\t')
-        .from_writer(Vec::new());
+    let (read_id_idx, seq_idx, qual_idx): (usize, usize, usize) = {
+        match line_iter.find(|s| !s.starts_with('#')) {
+            None => {
+                return Err(Error::from_reason(
+                    "Missing TSV header for seq_table output",
+                ));
+            }
+            Some(header) => {
+                let columns: Vec<&str> = header.split('\t').collect();
+                let read_id_idx = columns
+                    .iter()
+                    .position(|col| *col == "read_id")
+                    .ok_or_else(|| Error::from_reason("Missing read_id column in TSV header"))?;
+                let seq_idx = columns
+                    .iter()
+                    .position(|col| *col == "sequence")
+                    .ok_or_else(|| Error::from_reason("Missing sequence column in TSV header"))?;
+                let qual_idx = columns
+                    .iter()
+                    .position(|col| *col == "qualities")
+                    .ok_or_else(|| Error::from_reason("Missing qualities column in TSV header"))?;
+                (read_id_idx, seq_idx, qual_idx)
+            }
+        }
+    };
 
-    // Write header
-    let _: () = wtr
-        .write_record(["read_id", "sequence", "qualities"])
-        .map_err(|e| Error::from_reason(format!("Failed to write TSV header: {e}")))?;
+    let mut output = String::from("read_id\tsequence\tqualities\n");
 
-    // Process each record
-    for result in rdr.deserialize() {
-        let record: SeqTableRecord =
-            result.map_err(|e| Error::from_reason(format!("Failed to parse TSV row: {e}")))?;
-        let _: () = wtr
-            .write_record([&record.read_id, &record.sequence, &record.qualities])
-            .map_err(|e| Error::from_reason(format!("Failed to write TSV row: {e}")))?;
+    for line in line_iter {
+        let columns: Vec<&str> = line.split('\t').collect();
+        let read_id = columns
+            .get(read_id_idx)
+            .ok_or_else(|| Error::from_reason("Missing read_id value in TSV row"))?;
+        let sequence = columns
+            .get(seq_idx)
+            .ok_or_else(|| Error::from_reason("Missing sequence value in TSV row"))?;
+        let qualities = columns
+            .get(qual_idx)
+            .ok_or_else(|| Error::from_reason("Missing qualities value in TSV row"))?;
+        output.push_str(read_id);
+        output.push('\t');
+        output.push_str(sequence);
+        output.push('\t');
+        output.push_str(qualities);
+        output.push('\n');
     }
 
-    let inner = wtr
-        .into_inner()
-        .map_err(|e| Error::from_reason(format!("Failed to flush TSV writer: {e}")))?;
-
-    String::from_utf8(inner)
-        .map_err(|e| Error::from_reason(format!("Invalid UTF-8 in output: {e}")))
+    Ok(output)
 }

@@ -24,6 +24,7 @@ export interface MappedReadInfo {
   alignment_length: number;
   alignment_type: 'primary_forward' | 'primary_reverse' | 'secondary_forward' | 'secondary_reverse' | 'supplementary_forward' | 'supplementary_reverse';
   mod_count: string;
+  mapq: number;
 }
 
 export interface UnmappedReadInfo {
@@ -31,6 +32,7 @@ export interface UnmappedReadInfo {
   sequence_length: number;
   alignment_type: 'unmapped';
   mod_count: string;
+  mapq: number;
 }
 
 export type ReadInfoRecord = MappedReadInfo | UnmappedReadInfo;
@@ -146,6 +148,7 @@ export interface MappedBamModRecord {
   mod_table: ModTableEntry[];
   read_id: string;
   seq_len: number;
+  mapq: number;
 }
 
 export interface UnmappedBamModRecord {
@@ -153,11 +156,42 @@ export interface UnmappedBamModRecord {
   mod_table: ModTableEntry[];
   read_id: string;
   seq_len: number;
+  mapq: number;
 }
 
 export type BamModRecord = MappedBamModRecord | UnmappedBamModRecord;
 
 export declare function bamMods(options: ReadOptions): Promise<BamModRecord[]>;
+
+// Window output types
+export interface WindowModTableEntry {
+  base: string;
+  is_strand_plus: boolean;
+  mod_code: string;
+  data: [number, number, number, number, number, number][];
+}
+
+export interface MappedWindowReadEntry {
+  alignment_type: 'primary_forward' | 'primary_reverse' | 'secondary_forward' | 'secondary_reverse' | 'supplementary_forward' | 'supplementary_reverse';
+  alignment: {
+    start: number;
+    end: number;
+    contig: string;
+    contig_id: number;
+  };
+  mod_table: WindowModTableEntry[];
+  read_id: string;
+  seq_len: number;
+}
+
+export interface UnmappedWindowReadEntry {
+  alignment_type: 'unmapped';
+  mod_table: WindowModTableEntry[];
+  read_id: string;
+  seq_len: number;
+}
+
+export type WindowReadEntry = MappedWindowReadEntry | UnmappedWindowReadEntry;
 
 // Base options shared by WindowOptions (excluding region/fullRegion)
 interface BaseWindowOptionsCore {
@@ -246,6 +280,6 @@ interface WindowOptionsWithoutRegion extends BaseWindowOptionsCore {
  */
 export type WindowOptions = WindowOptionsWithRegion | WindowOptionsWithoutRegion;
 
-export declare function windowReads(options: WindowOptions): Promise<string>;
+export declare function windowReads(options: WindowOptions): Promise<WindowReadEntry[]>;
 
 export declare function seqTable(options: ReadOptions): Promise<string>;

@@ -9,6 +9,8 @@ updates:
     labels:
       - "dependencies"
       - "rust"
+    cooldown:
+      default-days: 7
 
   # npm dependencies (Node)
   - package-ecosystem: "npm"
@@ -19,6 +21,8 @@ updates:
     labels:
       - "dependencies"
       - "npm"
+    cooldown:
+      default-days: 7
 
   # GitHub Actions versions
   - package-ecosystem: "github-actions"
@@ -29,3 +33,5 @@ updates:
     labels:
       - "dependencies"
       - "github-actions"
+    cooldown:
+      default-days: 7

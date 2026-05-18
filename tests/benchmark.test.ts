@@ -52,7 +52,7 @@ describe('Benchmark Tests', () => {
     });
 
     // Verify we got results
-    const entries = JSON.parse(result) as unknown[];
-    expect(entries.length).toBeGreaterThan(0);
+    expect(Array.isArray(result)).toBe(true);
+    expect(result.length).toBeGreaterThan(0);
   }, 30000); // 30 second timeout
 });

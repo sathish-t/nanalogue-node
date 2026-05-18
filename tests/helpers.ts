@@ -424,28 +424,29 @@ export interface WindowModTableEntry {
 /**
  * A single entry in the windowReads JSON output array
  */
-export interface WindowReadEntry {
+export interface MappedWindowReadEntry {
   alignment_type: string;
-  alignment?: { start: number; end: number; contig: string; contig_id: number };
+  alignment: { start: number; end: number; contig: string; contig_id: number };
   mod_table: WindowModTableEntry[];
   read_id: string;
   seq_len: number;
 }
 
-/**
- * Parse a windowReads JSON string into typed entries
- */
-export function parseWindowReadsJson(jsonStr: string): WindowReadEntry[] {
-  return JSON.parse(jsonStr) as WindowReadEntry[];
+export interface UnmappedWindowReadEntry {
+  alignment_type: 'unmapped';
+  mod_table: WindowModTableEntry[];
+  read_id: string;
+  seq_len: number;
 }
+
+export type WindowReadEntry = MappedWindowReadEntry | UnmappedWindowReadEntry;
 
 /**
  * Get total number of data entries (windows) across all reads and mod_table entries
  */
-export function getWindowDataCount(jsonStr: string): number {
-  const entries = parseWindowReadsJson(jsonStr);
+export function getWindowDataCount(value: WindowReadEntry[]): number {
   let total = 0;
-  for (const entry of entries) {
+  for (const entry of value) {
     for (const modEntry of entry.mod_table) {
       total += modEntry.data.length;
     }
@@ -456,11 +457,12 @@ export function getWindowDataCount(jsonStr: string): number {
 /**
  * Get unique read IDs from windowReads JSON, preserving order of first appearance
  */
-export function getUniqueReadIdsFromWindowJson(jsonStr: string): string[] {
-  const entries = parseWindowReadsJson(jsonStr);
+export function getUniqueReadIdsFromWindowJson(
+  value: WindowReadEntry[],
+): string[] {
   const seen = new Set<string>();
   const result: string[] = [];
-  for (const entry of entries) {
+  for (const entry of value) {
     if (!seen.has(entry.read_id)) {
       seen.add(entry.read_id);
       result.push(entry.read_id);
@@ -472,11 +474,12 @@ export function getUniqueReadIdsFromWindowJson(jsonStr: string): string[] {
 /**
  * Get unique mod_code values from all mod_table entries in windowReads JSON
  */
-export function getUniqueModCodesFromWindowJson(jsonStr: string): string[] {
-  const entries = parseWindowReadsJson(jsonStr);
+export function getUniqueModCodesFromWindowJson(
+  value: WindowReadEntry[],
+): string[] {
   const seen = new Set<string>();
   const result: string[] = [];
-  for (const entry of entries) {
+  for (const entry of value) {
     for (const modEntry of entry.mod_table) {
       if (!seen.has(modEntry.mod_code)) {
         seen.add(modEntry.mod_code);
@@ -491,12 +494,11 @@ export function getUniqueModCodesFromWindowJson(jsonStr: string): string[] {
  * Count data entries for a specific read ID in windowReads JSON
  */
 export function getWindowDataCountForReadId(
-  jsonStr: string,
+  value: WindowReadEntry[],
   readId: string,
 ): number {
-  const entries = parseWindowReadsJson(jsonStr);
   let total = 0;
-  for (const entry of entries) {
+  for (const entry of value) {
     if (entry.read_id === readId) {
       for (const modEntry of entry.mod_table) {
         total += modEntry.data.length;

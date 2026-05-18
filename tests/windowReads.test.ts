@@ -8,7 +8,6 @@ import {
   getExampleBamPath,
   loadExpectedJson,
   normalizeJsonForComparison,
-  parseWindowReadsJson,
 } from './helpers';
 
 const getTestDataPath = (relativePath: string) =>
@@ -18,7 +17,7 @@ describe('windowReads expected output comparison', () => {
   it('test_example_1_bam_window_reads', async () => {
     const bamPath = getExampleBamPath('example_1.bam');
     const result = await windowReads({ bamPath, win: 2, step: 1 });
-    const actual = normalizeJsonForComparison(JSON.parse(result));
+    const actual = normalizeJsonForComparison(result);
     const expected = normalizeJsonForComparison(
       loadExpectedJson('example_1_window_reads_json'),
     );
@@ -28,7 +27,7 @@ describe('windowReads expected output comparison', () => {
   it('test_example_3_bam_window_reads', async () => {
     const bamPath = getExampleBamPath('example_3.bam');
     const result = await windowReads({ bamPath, win: 2, step: 1 });
-    const actual = normalizeJsonForComparison(JSON.parse(result));
+    const actual = normalizeJsonForComparison(result);
     const expected = normalizeJsonForComparison(
       loadExpectedJson('example_3_window_reads_json'),
     );
@@ -38,7 +37,7 @@ describe('windowReads expected output comparison', () => {
   it('test_example_7_bam_window_reads', async () => {
     const bamPath = getExampleBamPath('example_7.bam');
     const result = await windowReads({ bamPath, win: 2, step: 1 });
-    const actual = normalizeJsonForComparison(JSON.parse(result));
+    const actual = normalizeJsonForComparison(result);
     const expected = normalizeJsonForComparison(
       loadExpectedJson('example_7_window_reads_json'),
     );
@@ -55,7 +54,7 @@ describe('windowReads gradient (grad_density) tests', () => {
       step: 1,
       winOp: 'grad_density',
     });
-    const actual = normalizeJsonForComparison(JSON.parse(result));
+    const actual = normalizeJsonForComparison(result);
     const expected = normalizeJsonForComparison(
       loadExpectedJson('example_10_win_grad_json_win_10_step_1'),
     );
@@ -70,7 +69,7 @@ describe('windowReads gradient (grad_density) tests', () => {
       step: 2,
       winOp: 'grad_density',
     });
-    const actual = normalizeJsonForComparison(JSON.parse(result));
+    const actual = normalizeJsonForComparison(result);
     const expected = normalizeJsonForComparison(
       loadExpectedJson('example_10_win_grad_json_win_20_step_2'),
     );
@@ -85,7 +84,7 @@ describe('windowReads gradient (grad_density) tests', () => {
       step: 1,
       winOp: 'grad_density',
     });
-    const actual = normalizeJsonForComparison(JSON.parse(result));
+    const actual = normalizeJsonForComparison(result);
     const expected = normalizeJsonForComparison(
       loadExpectedJson('example_11_win_grad_json_win_10_step_1'),
     );
@@ -100,7 +99,7 @@ describe('windowReads gradient (grad_density) tests', () => {
       step: 2,
       winOp: 'grad_density',
     });
-    const actual = normalizeJsonForComparison(JSON.parse(result));
+    const actual = normalizeJsonForComparison(result);
     const expected = normalizeJsonForComparison(
       loadExpectedJson('example_11_win_grad_json_win_20_step_2'),
     );
@@ -132,10 +131,10 @@ describe('windowReads', () => {
       step: 1,
     });
 
-    expect(typeof result).toBe('string');
+    expect(Array.isArray(result)).toBe(true);
     expect(result.length).toBeGreaterThan(0);
 
-    const entries = parseWindowReadsJson(result);
+    const entries = result;
     expect(Array.isArray(entries)).toBe(true);
     expect(entries.length).toBeGreaterThan(0);
   });
@@ -147,7 +146,7 @@ describe('windowReads', () => {
       step: 1,
     });
 
-    const entries = parseWindowReadsJson(result);
+    const entries = result;
     for (const entry of entries) {
       expect(entry).toHaveProperty('alignment_type');
       expect(entry).toHaveProperty('mod_table');
@@ -176,7 +175,7 @@ describe('windowReads', () => {
       step: 2,
     });
 
-    expect(typeof result).toBe('string');
+    expect(Array.isArray(result)).toBe(true);
     expect(result.length).toBeGreaterThan(0);
   });
 
@@ -188,11 +187,11 @@ describe('windowReads', () => {
       region: 'dummyI',
     });
 
-    const entries = parseWindowReadsJson(result);
+    const entries = result;
 
     // All mapped entries should have contig dummyI
     for (const entry of entries) {
-      if (entry.alignment) {
+      if (entry.alignment_type !== 'unmapped') {
         expect(entry.alignment.contig).toBe('dummyI');
       }
     }

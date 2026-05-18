@@ -18,7 +18,6 @@ import {
   getUniqueReadIdsFromWindowJson,
   getWindowDataCount,
   getWindowDataCountForReadId,
-  parseWindowReadsJson,
 } from './helpers';
 
 describe('TestWindowReadsBamFiltering', () => {
@@ -169,15 +168,17 @@ describe('TestWindowReadsBamFiltering', () => {
 
     // Test with a specific region
     const result = await windowReads({ ...base, region: 'contig_00000' });
-    const entries = parseWindowReadsJson(result);
+    const entries = result;
 
     expect(entries.length).toBeGreaterThan(0);
 
     // Verify all mapped results are from contig_00000
-    const mappedEntries = entries.filter((e) => e.alignment !== undefined);
+    const mappedEntries = entries.filter(
+      (e) => e.alignment_type !== 'unmapped',
+    );
     if (mappedEntries.length > 0) {
       const uniqueContigs = [
-        ...new Set(mappedEntries.map((e) => e.alignment?.contig)),
+        ...new Set(mappedEntries.map((e) => e.alignment.contig)),
       ];
       expect(uniqueContigs).toEqual(['contig_00000']);
     }
