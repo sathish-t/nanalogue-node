@@ -254,45 +254,48 @@ switch (platform) {
         break
       case 'riscv64':
         if (isMusl()) {
+          throw new Error(`Unsupported architecture on Linux musl: ${arch}`)
+        }
+        localFileExisted = existsSync(
+          join(__dirname, 'nanalogue.linux-riscv64-gnu.node')
+        )
+        try {
+          if (localFileExisted) {
+            nativeBinding = require('./nanalogue.linux-riscv64-gnu.node')
+          } else {
+            nativeBinding = require('@nanalogue/node-linux-riscv64-gnu')
+          }
+        } catch (e) {
+          loadError = e
+        }
+        break
+      case 'ppc64':
+        if (isMusl()) {
           localFileExisted = existsSync(
-            join(__dirname, 'nanalogue.linux-riscv64-musl.node')
+            join(__dirname, 'nanalogue.linux-ppc64-musl.node')
           )
           try {
             if (localFileExisted) {
-              nativeBinding = require('./nanalogue.linux-riscv64-musl.node')
+              nativeBinding = require('./nanalogue.linux-ppc64-musl.node')
             } else {
-              nativeBinding = require('@nanalogue/node-linux-riscv64-musl')
+              nativeBinding = require('@nanalogue/node-linux-ppc64-musl')
             }
           } catch (e) {
             loadError = e
           }
         } else {
           localFileExisted = existsSync(
-            join(__dirname, 'nanalogue.linux-riscv64-gnu.node')
+            join(__dirname, 'nanalogue.linux-ppc64-gnu.node')
           )
           try {
             if (localFileExisted) {
-              nativeBinding = require('./nanalogue.linux-riscv64-gnu.node')
+              nativeBinding = require('./nanalogue.linux-ppc64-gnu.node')
             } else {
-              nativeBinding = require('@nanalogue/node-linux-riscv64-gnu')
+              nativeBinding = require('@nanalogue/node-linux-ppc64-gnu')
             }
           } catch (e) {
             loadError = e
           }
-        }
-        break
-      case 's390x':
-        localFileExisted = existsSync(
-          join(__dirname, 'nanalogue.linux-s390x-gnu.node')
-        )
-        try {
-          if (localFileExisted) {
-            nativeBinding = require('./nanalogue.linux-s390x-gnu.node')
-          } else {
-            nativeBinding = require('@nanalogue/node-linux-s390x-gnu')
-          }
-        } catch (e) {
-          loadError = e
         }
         break
       default:

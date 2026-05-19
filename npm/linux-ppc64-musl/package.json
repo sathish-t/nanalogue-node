@@ -1,12 +1,12 @@
 {
-  "name": "@nanalogue/node-linux-x64-musl",
+  "name": "@nanalogue/node-linux-ppc64-musl",
   "version": "0.2.0",
   "cpu": [
-    "x64"
+    "ppc64"
   ],
-  "main": "nanalogue.linux-x64-musl.node",
+  "main": "nanalogue.linux-ppc64-musl.node",
   "files": [
-    "nanalogue.linux-x64-musl.node",
+    "nanalogue.linux-ppc64-musl.node",
     "README.md"
   ],
   "description": "Node.js bindings for Nanalogue: single-molecule BAM/Mod-BAM analysis",

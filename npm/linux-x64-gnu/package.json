@@ -6,7 +6,8 @@
   ],
   "main": "nanalogue.linux-x64-gnu.node",
   "files": [
-    "nanalogue.linux-x64-gnu.node"
+    "nanalogue.linux-x64-gnu.node",
+    "README.md"
   ],
   "description": "Node.js bindings for Nanalogue: single-molecule BAM/Mod-BAM analysis",
   "keywords": [

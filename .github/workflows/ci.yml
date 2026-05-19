@@ -24,9 +24,6 @@ jobs:
   lint-and-typecheck:
     name: Lint & Typecheck
     runs-on: ubuntu-latest
-    env:
-      CLANG_PATH: /usr/bin/clang-18
-      LIBCLANG_PATH: /usr/lib/llvm-18/lib
     steps:
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -37,6 +34,21 @@ jobs:
         run: |
           rustup update
           rustup component add rustfmt clippy
+
+      - name: Install Linux LLVM
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          for version in 18 19 20 21; do
+            if sudo apt-get install -y "clang-$version" "libclang-$version-dev"; then
+              echo "CLANG_PATH=/usr/bin/clang-$version" >> "$GITHUB_ENV"
+              echo "LIBCLANG_PATH=/usr/lib/llvm-$version/lib" >> "$GITHUB_ENV"
+              echo "Using clang-$version"
+              exit 0
+            fi
+          done
+          echo "Could not install supported clang/libclang version 18-21" >&2
+          exit 1
 
       - name: Setup Node.js
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
@@ -95,6 +107,22 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Install Linux LLVM
+        if: ${{ startsWith(matrix.os, 'ubuntu') }}
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          for version in 18 19 20 21; do
+            if sudo apt-get install -y "clang-$version" "libclang-$version-dev"; then
+              echo "CLANG_PATH=/usr/bin/clang-$version" >> "$GITHUB_ENV"
+              echo "LIBCLANG_PATH=/usr/lib/llvm-$version/lib" >> "$GITHUB_ENV"
+              echo "Using clang-$version"
+              exit 0
+            fi
+          done
+          echo "Could not install supported clang/libclang version 18-21" >&2
+          exit 1
+
       - name: Setup Node.js ${{ matrix.node }}
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
         with:
@@ -111,9 +139,6 @@ jobs:
 
       - name: Build native module (Linux)
         if: ${{ startsWith(matrix.os, 'ubuntu') }}
-        env:
-          CLANG_PATH: /usr/bin/clang-18
-          LIBCLANG_PATH: /usr/lib/llvm-18/lib
         run: npm run build
 
       - name: Build native module (non-Linux)
@@ -135,6 +160,21 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Install Linux LLVM
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          for version in 18 19 20 21; do
+            if sudo apt-get install -y "clang-$version" "libclang-$version-dev"; then
+              echo "CLANG_PATH=/usr/bin/clang-$version" >> "$GITHUB_ENV"
+              echo "LIBCLANG_PATH=/usr/lib/llvm-$version/lib" >> "$GITHUB_ENV"
+              echo "Using clang-$version"
+              exit 0
+            fi
+          done
+          echo "Could not install supported clang/libclang version 18-21" >&2
+          exit 1
+
       - name: Setup Node.js
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
         with:
@@ -150,9 +190,6 @@ jobs:
         run: npm ci
 
       - name: Build native module
-        env:
-          CLANG_PATH: /usr/bin/clang-18
-          LIBCLANG_PATH: /usr/lib/llvm-18/lib
         run: npm run build
 
       - name: Run tests

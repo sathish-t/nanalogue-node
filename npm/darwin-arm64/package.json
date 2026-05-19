@@ -6,7 +6,8 @@
   ],
   "main": "nanalogue.darwin-arm64.node",
   "files": [
-    "nanalogue.darwin-arm64.node"
+    "nanalogue.darwin-arm64.node",
+    "README.md"
   ],
   "description": "Node.js bindings for Nanalogue: single-molecule BAM/Mod-BAM analysis",
   "keywords": [

@@ -1,12 +1,12 @@
 {
-  "name": "@nanalogue/node-linux-x64-musl",
+  "name": "@nanalogue/node-linux-arm-gnueabihf",
   "version": "0.2.0",
   "cpu": [
-    "x64"
+    "arm"
   ],
-  "main": "nanalogue.linux-x64-musl.node",
+  "main": "nanalogue.linux-arm-gnueabihf.node",
   "files": [
-    "nanalogue.linux-x64-musl.node",
+    "nanalogue.linux-arm-gnueabihf.node",
     "README.md"
   ],
   "description": "Node.js bindings for Nanalogue: single-molecule BAM/Mod-BAM analysis",
@@ -34,6 +34,6 @@
     "linux"
   ],
   "libc": [
-    "musl"
+    "glibc"
   ]
 }

@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-05-19
+
+### Changed
+- Bump all Rust and npm package versions to 0.2.0; refresh lockfiles for nanalogue 0.1.11 and rust-htslib 1.0.0
+- `windowReads` now returns typed arrays instead of JSON strings
+- `readInfo` and `bamMods` now surface `mapq` in their outputs
+- Update README, TypeScript declarations, fixtures, and tests to match the 0.2.0 API refresh
+- Remove `url` and `csv` crate dependencies by reusing BAM path parsing and simplifying `seqTable` TSV filtering
+- Pin GitHub Actions, add workflow concurrency and read-only permissions, and add Dependabot cooldowns
+- Update GitHub Actions artifact uploads/downloads to the latest pinned versions in the publish workflow
+- Switch publish builds from Docker-based Linux images to `cargo-zigbuild` and expand the release target matrix
+
 ## [0.1.4] - 2026-02-18
 
 ### Changed
@@ -59,17 +71,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bump vitest from 2.1.9 to 4.0.18
 - Bump @biomejs/biome from 2.3.13 to 2.3.14
 - Bump @napi-rs/cli from 2.18.4 to 3.5.1
+- Bump actions/checkout from v4 to v6
+- Bump actions/setup-node from v4 to v6
+- Bump actions/upload-artifact from v4 to v6
+- Bump actions/download-artifact from v4 to v7
 
 ### Added
 - Tests for invalid tag validation across all functions
 - Tests for `fullRegion` without `region` error handling
 - Tests for `seqTable` constraint validation
-
-### Infrastructure
-- Bump actions/checkout from v4 to v6
-- Bump actions/setup-node from v4 to v6
-- Bump actions/upload-artifact from v4 to v6
-- Bump actions/download-artifact from v4 to v7
 
 ## [0.1.0] - 2026-02-04
 

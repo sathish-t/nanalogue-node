@@ -79,7 +79,7 @@ describe('TestWindowReadsValidation', () => {
         win: 0,
         step: 2,
       }),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/window size must be > 0/i);
   });
 
   it('windowReads with negative win raises error', async () => {
@@ -89,7 +89,7 @@ describe('TestWindowReadsValidation', () => {
         win: -5,
         step: 2,
       }),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/window size must be > 0/i);
   });
 });
 
