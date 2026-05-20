@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.2.0] - 2026-05-19
+## [0.2.0] - 2026-05-20
 
 ### Changed
 - Bump all Rust and npm package versions to 0.2.0; refresh lockfiles for nanalogue 0.1.11 and rust-htslib 1.0.0
@@ -18,6 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Pin GitHub Actions, add workflow concurrency and read-only permissions, and add Dependabot cooldowns
 - Update GitHub Actions artifact uploads/downloads to the latest pinned versions in the publish workflow
 - Switch publish builds from Docker-based Linux images to `cargo-zigbuild` and expand the release target matrix
+
+### Added
+- Add `.cargo/config.toml` for compilation to musl targets
 
 ## [0.1.4] - 2026-02-18
 
