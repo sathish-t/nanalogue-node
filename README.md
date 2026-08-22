@@ -20,6 +20,7 @@ in a BAM file in the mod BAM format (using MM/ML tags as specified in the
 
 - [Requirements](#requirements)
 - [Installation](#installation)
+- [Remote BAM URLs](#remote-bam-urls)
 - [Functions](#functions)
   - [peek](#peek)
   - [readInfo](#readinfo)
@@ -44,6 +45,20 @@ in a BAM file in the mod BAM format (using MM/ML tags as specified in the
 ```bash
 npm install @nanalogue/node
 ```
+
+## Remote BAM URLs
+
+When reading BAM files over HTTPS, the native dependency needs access to a CA
+certificate bundle. If remote URLs fail with a libcurl certificate error, set
+`CURL_CA_BUNDLE` before starting the Node.js script that imports
+`@nanalogue/node`. On Debian- and Ubuntu-based systems:
+
+```bash
+CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt node your-script.js
+```
+
+Use a PEM CA bundle installed on your system; its location varies by operating
+system and package manager.
 
 ## Functions
 
