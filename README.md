@@ -19,6 +19,7 @@ in a BAM file in the mod BAM format (using MM/ML tags as specified in the
 ## Table of Contents
 
 - [Requirements](#requirements)
+- [Supported platforms](#supported-platforms)
 - [Installation](#installation)
 - [Remote BAM URLs](#remote-bam-urls)
 - [Functions](#functions)
@@ -39,6 +40,16 @@ in a BAM file in the mod BAM format (using MM/ML tags as specified in the
 
 - Node.js 22 or higher
 - For building from source: Rust toolchain
+
+## Supported platforms
+
+Prebuilt binaries are available for macOS on Intel and Apple Silicon, and for
+Linux on x86_64, ARM64, 32-bit ARM, PowerPC 64-bit little-endian, and RISC-V
+64-bit architectures. Linux builds are provided for both GNU/libc and musl
+where applicable.
+
+Windows is not supported natively. Use the package through Windows Subsystem
+for Linux (WSL).
 
 ## Installation
 
@@ -305,10 +316,14 @@ import type { ReadOptions, BamModRecord, ReadInfoRecord } from '@nanalogue/node'
 
 ## Pagination
 
-All query functions (`readInfo`, `bamMods`, `windowReads`, `seqTable`) support pagination
-via `limit` and `offset` parameters. Pagination is applied after filtering, using lazy
-`.skip(offset).take(limit)` on the BAM record iterator, so only the requested records
-are processed.
+All query functions (`readInfo`, `bamMods`, `windowReads`, `seqTable`) support
+pagination via `limit` and `offset` parameters. Pagination is applied after
+filtering, using lazy `.skip(offset).take(limit)` on the BAM record iterator.
+
+The input remains sequential: to reach a requested page, Nanalogue must read
+and decompress every record before it. CRAM does not provide practical
+record-level random access, so a large `offset` can still be expensive even
+when the returned page is small.
 
 <!-- TEST CODE: NOOUTPUT pagination_readInfo -->
 ```typescript
