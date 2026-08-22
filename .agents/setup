@@ -89,9 +89,6 @@ rustup default stable
 rustup component add rustfmt clippy
 
 echo "Installing Node.js dependencies"
-# package-lock.json intentionally omits metadata for the locally produced
-# optional platform packages, so npm ci rejects it. Avoid rewriting the lock
-# file while installing the development dependencies in an orb.
-npm install --ignore-scripts --package-lock=false
+npm ci
 
 git config core.hooksPath .githooks || true
