@@ -1,0 +1,97 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$repo_root"
+export PATH="$HOME/.cargo/bin:$PATH"
+
+required_packages=(
+  build-essential
+  cmake
+  curl
+  libbz2-dev
+  liblzma-dev
+  libssl-dev
+  libzstd-dev
+  perl
+  pkg-config
+  zlib1g-dev
+)
+missing_packages=()
+apt_updated=false
+
+install_packages() {
+  if ! "$apt_updated"; then
+    sudo apt-get update
+    apt_updated=true
+  fi
+  sudo apt-get install -y "$@"
+}
+
+for package in "${required_packages[@]}"; do
+  if ! dpkg-query -W -f='${db:Status-Status}\n' "$package" 2>/dev/null | grep -qx installed; then
+    missing_packages+=("$package")
+  fi
+done
+
+if ((${#missing_packages[@]})); then
+  echo "Installing system packages: ${missing_packages[*]}"
+  install_packages "${missing_packages[@]}"
+fi
+
+clang_version=""
+for version in 18 19 20 21; do
+  if command -v "clang-$version" >/dev/null 2>&1 \
+    && [[ -f "/usr/lib/llvm-$version/lib/libclang.so" ]]; then
+    clang_version="$version"
+    break
+  fi
+done
+
+if [[ -z "$clang_version" ]]; then
+  for version in 18 19 20 21; do
+    if apt-cache show "clang-$version" >/dev/null 2>&1; then
+      echo "Installing clang-$version and libclang-$version-dev"
+      install_packages "clang-$version" "libclang-$version-dev"
+      clang_version="$version"
+      break
+    fi
+  done
+fi
+
+if [[ -z "$clang_version" ]]; then
+  echo "A supported clang/libclang version (18 through 21) is required" >&2
+  exit 1
+fi
+
+export CLANG_PATH="/usr/bin/clang-$clang_version"
+export LIBCLANG_PATH="/usr/lib/llvm-$clang_version/lib"
+echo "Using clang-$clang_version"
+
+llvm_profile_marker="# nanalogue-node LLVM configuration"
+if ! grep -Fqx "$llvm_profile_marker" "$HOME/.bash_profile" 2>/dev/null; then
+  cat >> "$HOME/.bash_profile" <<EOF
+
+$llvm_profile_marker
+export CLANG_PATH="$CLANG_PATH"
+export LIBCLANG_PATH="$LIBCLANG_PATH"
+EOF
+fi
+
+if ! command -v rustup >/dev/null 2>&1; then
+  echo "Installing Rust toolchain"
+  curl --fail --silent --show-error --location https://sh.rustup.rs \
+    | sh -s -- -y --profile minimal
+fi
+
+rustup toolchain install stable --profile minimal
+rustup default stable
+rustup component add rustfmt clippy
+
+echo "Installing Node.js dependencies"
+# package-lock.json intentionally omits metadata for the locally produced
+# optional platform packages, so npm ci rejects it. Avoid rewriting the lock
+# file while installing the development dependencies in an orb.
+npm install --ignore-scripts --package-lock=false
+
+git config core.hooksPath .githooks || true

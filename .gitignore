@@ -91,3 +91,6 @@ bkup/
 # HPC/cluster artifacts
 cargo.def
 cargo.img
+
+# Amp orb portal metadata
+.amp/portals/*
