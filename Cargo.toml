@@ -12,7 +12,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 nanalogue_core = { package = "nanalogue", version = "0.1.11" }
-napi = { version = "2", features = ["async", "serde-json", "tokio_rt"] }
+napi = { version = "3", features = ["async", "serde-json", "tokio_rt"] }
 napi-derive = "2"
 rust-htslib = "1.0.0"
 serde = { version = "1.0", features = ["derive"] }
