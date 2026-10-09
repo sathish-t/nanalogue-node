@@ -10,6 +10,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { type ReadInfoRecord, readInfo } from '../index';
 import {
   createInputOptions,
+  createMapqAvailabilityBam,
   createSimpleBam,
   createTwoModsBam,
 } from './fixtures';
@@ -73,15 +74,13 @@ describe('TestInputBamFiltering', () => {
 
     const resultAll = await readInfo(base);
 
-    // Filter with very high mapq (test data has mapq 10-20)
-    // Unmapped reads don't have MAPQ, so they pass through
+    // Filter with very high mapq (test data has mapq 10-20).
     const resultFiltered = await readInfo({ ...base, mapqFilter: 100 });
 
     expect(resultAll.length).toBeGreaterThan(0);
-    expect(resultFiltered.length).toBeLessThan(resultAll.length);
-    expect(resultFiltered.length).toBeGreaterThan(0); // Unmapped reads still present
+    expect(resultFiltered).toEqual([]);
 
-    // Now exclude reads without mapq and verify we get zero results
+    // Excluding unavailable MAPQ values cannot restore records filtered by MAPQ.
     const resultFiltered2 = await readInfo({
       ...base,
       mapqFilter: 100,
@@ -89,6 +88,28 @@ describe('TestInputBamFiltering', () => {
     });
 
     expect(resultFiltered2.length).toBe(0);
+  });
+
+  it('excludes MAPQ 255 while retaining qualifying reads', async () => {
+    const mapqAvailabilityBamPath = await createMapqAvailabilityBam(tmpDir);
+    const base = createInputOptions(mapqAvailabilityBamPath, {
+      mapqFilter: 10,
+    });
+
+    const recordsWithoutFlag = await readInfo(base);
+    const recordsWithFlag = await readInfo({
+      ...base,
+      excludeMapqUnavail: true,
+    });
+
+    expect(recordsWithoutFlag.map((record) => record.mapq)).toEqual(
+      expect.arrayContaining([60, 255]),
+    );
+    expect(
+      recordsWithoutFlag.every((record) => [60, 255].includes(record.mapq)),
+    ).toBe(true);
+    expect(recordsWithFlag.length).toBeGreaterThan(0);
+    expect(recordsWithFlag.every((record) => record.mapq === 60)).toBe(true);
   });
 
   it.each([

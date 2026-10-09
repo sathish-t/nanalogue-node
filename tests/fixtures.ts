@@ -80,6 +80,21 @@ export async function createTwoModsBam(tmpDir: string): Promise<string> {
 }
 
 /**
+ * Create a BAM with both MAPQ 60 and MAPQ 255 reads.
+ * Used to verify exclusion of unavailable MAPQ values without removing valid reads.
+ */
+export async function createMapqAvailabilityBam(
+  tmpDir: string,
+): Promise<string> {
+  const { bamPath } = await generateBamFromConfig(
+    tmpDir,
+    'mapq_availability_bam',
+    'mapq_availability',
+  );
+  return bamPath;
+}
+
+/**
  * Get path to a static example BAM file
  */
 export function getExampleBamPath(filename: string): string {

@@ -11,7 +11,7 @@ repository = "https://github.com/sathish-t/nanalogue-node"
 crate-type = ["cdylib"]
 
 [dependencies]
-nanalogue_core = { package = "nanalogue", version = "0.1.11" }
+nanalogue_core = { package = "nanalogue", version = "0.2.0" }
 napi = { version = "2", features = ["async", "serde-json", "tokio_rt"] }
 napi-derive = "2"
 rust-htslib = "1.0.0"

@@ -79,10 +79,9 @@ describe('TestWindowReadsBamFiltering', () => {
     const countFiltered = getWindowDataCount(resultFiltered);
 
     expect(countAll).toBeGreaterThan(0);
-    expect(countFiltered).toBeLessThan(countAll);
-    expect(countFiltered).toBeGreaterThan(0); // Unmapped reads still present
+    expect(countFiltered).toBe(0);
 
-    // Now exclude reads without mapq
+    // Excluding unavailable MAPQ values cannot restore records filtered by MAPQ.
     const resultFiltered2 = await windowReads({
       ...base,
       mapqFilter: 100,

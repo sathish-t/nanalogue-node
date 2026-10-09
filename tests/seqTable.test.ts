@@ -65,6 +65,15 @@ describe('seqTable', () => {
     expect(result.length).toBeGreaterThan(0);
   });
 
+  it('returns a header-only table when no read fully spans the region', async () => {
+    const result = await seqTable({
+      bamPath: testBamPath,
+      region: 'dummyI',
+    });
+
+    expect(result).toBe('read_id\tsequence\tqualities\n');
+  });
+
   it('can filter by read ID', async () => {
     // First get all reads
     const allReads = await seqTable({

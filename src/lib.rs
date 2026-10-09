@@ -19,6 +19,8 @@ use std::collections::{HashMap, HashSet};
 use std::num::NonZeroU32;
 use std::str::FromStr as _;
 
+const SEQ_TABLE_HEADER: &str = "read_id\tsequence\tqualities\n";
+
 /// Result from `peek()` containing BAM file metadata.
 #[napi(object)]
 #[non_exhaustive]
@@ -283,10 +285,12 @@ impl TryFrom<&ReadOptions> for InputBam {
         let _: &mut InputBamBuilder = builder.bam_path(path_or_url);
 
         if let Some(v) = options.min_seq_len {
-            let _: &mut InputBamBuilder = builder.min_seq_len(u64::from(v));
+            let _: &mut InputBamBuilder = builder.min_seq_len(v);
         }
         if let Some(v) = options.min_align_len {
-            let _: &mut InputBamBuilder = builder.min_align_len(i64::from(v));
+            let min_align_len = u32::try_from(v)
+                .map_err(|_| Error::from_reason("min_align_len must be non-negative"))?;
+            let _: &mut InputBamBuilder = builder.min_align_len(min_align_len);
         }
         if let Some(v) = options.read_id_set.as_ref() {
             let set: HashSet<String> = v.iter().cloned().collect();
@@ -453,18 +457,14 @@ fn build_input_options(options: &ReadOptions) -> Result<(InputBam, InputMods<Opt
 fn load_bam(bam: &InputBam) -> Result<rust_htslib::bam::IndexedReader> {
     match (&bam.region, &bam.bam_path) {
         (Some(v), PathOrURLOrStdin::Path(w)) => {
-            let fetch_def: FetchDefinition = v
-                .try_into()
-                .map_err(|e: nanalogue_core::Error| Error::from_reason(e.to_string()))?;
+            let fetch_def = FetchDefinition::from(v);
             nanalogue_indexed_bam_reader(w, fetch_def)
                 .map_err(|e| Error::from_reason(format!("Failed to open BAM: {e}")))
         }
         (None, PathOrURLOrStdin::Path(w)) => nanalogue_indexed_bam_reader(w, FetchDefinition::All)
             .map_err(|e| Error::from_reason(format!("Failed to open BAM: {e}"))),
         (Some(v), PathOrURLOrStdin::URL(w)) => {
-            let fetch_def: FetchDefinition = v
-                .try_into()
-                .map_err(|e: nanalogue_core::Error| Error::from_reason(e.to_string()))?;
+            let fetch_def = FetchDefinition::from(v);
             nanalogue_indexed_bam_reader_from_url(w, fetch_def)
                 .map_err(|e| Error::from_reason(format!("Failed to open BAM: {e}")))
         }
@@ -678,10 +678,10 @@ fn window_reads_sync(options: &WindowOptions) -> Result<serde_json::Value> {
     if options.step <= 0 {
         return Err(Error::from_reason("Step size must be > 0"));
     }
-    #[expect(clippy::cast_sign_loss, reason = "validated positive above")]
-    let win = options.win as usize;
-    #[expect(clippy::cast_sign_loss, reason = "validated positive above")]
-    let step = options.step as usize;
+    let win =
+        u32::try_from(options.win).map_err(|_| Error::from_reason("Window size must be > 0"))?;
+    let step =
+        u32::try_from(options.step).map_err(|_| Error::from_reason("Step size must be > 0"))?;
 
     let window_options = InputWindowingBuilder::default()
         .win(win)
@@ -701,26 +701,34 @@ fn window_reads_sync(options: &WindowOptions) -> Result<serde_json::Value> {
     let mut buffer = Vec::new();
 
     let win_op = options.win_op.as_deref().unwrap_or("density");
-    match win_op {
+    let window_result = match win_op {
         "density" => {
             rust_window_reads::run_json(&mut buffer, paginated, window_options, &mods, |x| {
-                analysis::threshold_and_mean(x).map(Into::into)
+                analysis::threshold_and_mean(x).map(|value| Some(value.into()))
             })
         }
-        "grad_density" => rust_window_reads::run_json(
-            &mut buffer,
-            paginated,
-            window_options,
-            &mods,
-            analysis::threshold_and_gradient,
-        ),
+        "grad_density" => {
+            rust_window_reads::run_json(&mut buffer, paginated, window_options, &mods, |x| {
+                analysis::threshold_and_gradient(x).map(Some)
+            })
+        }
         _ => {
             return Err(Error::from_reason(
                 "win_op must be set to 'density' or 'grad_density'",
             ));
         }
+    };
+
+    if let Err(error) = window_result {
+        if matches!(
+            &error,
+            nanalogue_core::Error::InvalidState(message)
+                if message.starts_with("No records found as input for analysis.")
+        ) {
+            return Ok(serde_json::Value::Array(Vec::new()));
+        }
+        return Err(Error::from_reason(format!("window_reads failed: {error}")));
     }
-    .map_err(|e| Error::from_reason(format!("window_reads failed: {e}")))?;
 
     let json_str =
         String::from_utf8(buffer).map_err(|e| Error::from_reason(format!("Invalid UTF-8: {e}")))?;
@@ -806,8 +814,16 @@ fn seq_table_sync(options: &ReadOptions) -> Result<String> {
 
     let mut buffer = Vec::new();
 
-    rust_reads_table::run(&mut buffer, paginated, Some(mods), seq_display, "")
-        .map_err(|e| Error::from_reason(format!("seq_table failed: {e}")))?;
+    if let Err(error) = rust_reads_table::run(&mut buffer, paginated, Some(mods), seq_display, "") {
+        if matches!(
+            &error,
+            nanalogue_core::Error::InvalidState(message)
+                if message.starts_with("No records found as input for analysis.")
+        ) {
+            return Ok(String::from(SEQ_TABLE_HEADER));
+        }
+        return Err(Error::from_reason(format!("seq_table failed: {error}")));
+    }
 
     let full_tsv =
         String::from_utf8(buffer).map_err(|e| Error::from_reason(format!("Invalid UTF-8: {e}")))?;
@@ -847,7 +863,7 @@ fn filter_seq_table_columns(tsv: &str) -> Result<String> {
         }
     };
 
-    let mut output = String::from("read_id\tsequence\tqualities\n");
+    let mut output = String::from(SEQ_TABLE_HEADER);
 
     for line in line_iter {
         let columns: Vec<&str> = line.split('\t').collect();

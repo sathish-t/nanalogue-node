@@ -76,10 +76,9 @@ describe('TestInputBamFiltering', () => {
     const resultFiltered = await bamMods({ ...base, mapqFilter: 100 });
 
     expect(resultAll.length).toBeGreaterThan(0);
-    expect(resultFiltered.length).toBeLessThan(resultAll.length);
-    expect(resultFiltered.length).toBeGreaterThan(0); // Unmapped reads still present
+    expect(resultFiltered).toEqual([]);
 
-    // Now exclude reads without mapq
+    // Excluding unavailable MAPQ values cannot restore records filtered by MAPQ.
     const resultFiltered2 = await bamMods({
       ...base,
       mapqFilter: 100,
