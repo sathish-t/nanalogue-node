@@ -19,6 +19,7 @@ use std::collections::{HashMap, HashSet};
 use std::num::NonZeroU32;
 use std::str::FromStr as _;
 
+/// Header row written before sequence table records.
 const SEQ_TABLE_HEADER: &str = "read_id\tsequence\tqualities\n";
 
 /// Result from `peek()` containing BAM file metadata.
@@ -289,7 +290,7 @@ impl TryFrom<&ReadOptions> for InputBam {
         }
         if let Some(v) = options.min_align_len {
             let min_align_len = u32::try_from(v)
-                .map_err(|_| Error::from_reason("min_align_len must be non-negative"))?;
+                .map_err(|_error| Error::from_reason("min_align_len must be non-negative"))?;
             let _: &mut InputBamBuilder = builder.min_align_len(min_align_len);
         }
         if let Some(v) = options.read_id_set.as_ref() {
@@ -678,10 +679,10 @@ fn window_reads_sync(options: &WindowOptions) -> Result<serde_json::Value> {
     if options.step <= 0 {
         return Err(Error::from_reason("Step size must be > 0"));
     }
-    let win =
-        u32::try_from(options.win).map_err(|_| Error::from_reason("Window size must be > 0"))?;
-    let step =
-        u32::try_from(options.step).map_err(|_| Error::from_reason("Step size must be > 0"))?;
+    let win = u32::try_from(options.win)
+        .map_err(|_error| Error::from_reason("Window size must be > 0"))?;
+    let step = u32::try_from(options.step)
+        .map_err(|_error| Error::from_reason("Step size must be > 0"))?;
 
     let window_options = InputWindowingBuilder::default()
         .win(win)
