@@ -5,7 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.2.1]
+
+### Added
+- Document supported prebuilt platforms, remote BAM URL CA-bundle configuration, and the cost of large pagination offsets
+- Add a MAPQ-255 fixture to verify `excludeMapqUnavail` removes unavailable MAPQ values while retaining qualifying reads
+- Run `cargo audit` and `cargo deny` dependency-security checks on pushes and reusable workflow calls
+- Add dependency-source and wildcard-version policy in `deny.toml`, with a documented exception for the unmaintained `custom_derive` dependency inherited through `rust-htslib`
+
+### Changed
+- Upgrade the Rust core dependency to Nanalogue 0.2.0 and adapt the binding to its updated API
+- Align MAPQ filtering with Nanalogue 0.2.0: unmapped reads use MAPQ 0 and do not pass a high `mapqFilter`
+- Prepare the Rust crate, root npm package, and platform npm packages for version 0.2.1
+- Increase the npm minimum release age to seven days and refresh CI dependency lockfiles
+
+### Fixed
+- Return an empty array from `windowReads` when a valid filter or pagination request matches no records
+- Return a header-only TSV from `seqTable` when a valid full-region query matches no records
+- Update the lockfile to replace yanked `chacha20` 0.10.0 with 0.10.2
+- Restore CI dependency installation and remove redundant nightly CI coordination
 
 ## [0.2.0] - 2026-05-20
 

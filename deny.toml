@@ -1,0 +1,17 @@
+[graph]
+all-features = true
+
+[advisories]
+# rust-htslib 1.0.0 depends on custom_derive; the advisory has no safe upgrade.
+# Remove this exception once rust-htslib removes that transitive dependency.
+ignore = ["RUSTSEC-2025-0058"]
+
+[bans]
+multiple-versions = "warn"
+wildcards = "deny"
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
+allow-git = []
