@@ -57,8 +57,8 @@ jobs:
           cache: "npm"
 
       - name: Pin npm
-        run: |
-          npm install -g npm@11.10.0
+        run: | # zizmor: ignore[adhoc-packages] npm 12.2.0 enforces min-release-age consistently across Node versions.
+          npm install -g npm@12.2.0
           npm --version
 
       - name: Install npm dependencies
@@ -156,8 +156,8 @@ jobs:
           cache: "npm"
 
       - name: Pin npm
-        run: |
-          npm install -g npm@11.10.0
+        run: | # zizmor: ignore[adhoc-packages] npm 12.2.0 enforces min-release-age consistently across Node versions.
+          npm install -g npm@12.2.0
           npm --version
 
       - name: Install npm dependencies
@@ -208,8 +208,8 @@ jobs:
           cache: "npm"
 
       - name: Pin npm
-        run: |
-          npm install -g npm@11.10.0
+        run: | # zizmor: ignore[adhoc-packages] npm 12.2.0 enforces min-release-age consistently across Node versions.
+          npm install -g npm@12.2.0
           npm --version
 
       - name: Install npm dependencies
