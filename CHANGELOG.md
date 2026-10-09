@@ -18,12 +18,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Align MAPQ filtering with Nanalogue 0.2.0: unmapped reads use MAPQ 0 and do not pass a high `mapqFilter`
 - Prepare the Rust crate, root npm package, and platform npm packages for version 0.2.1
 - Increase the npm minimum release age to seven days and refresh CI dependency lockfiles
+- Harden CI and publishing by pinning npm 12.2.0 for the release-age policy, documenting its intentional global install, and disabling package-manager caching in release jobs
 
 ### Fixed
 - Return an empty array from `windowReads` when a valid filter or pagination request matches no records
 - Return a header-only TSV from `seqTable` when a valid full-region query matches no records
 - Update the lockfile to replace yanked `chacha20` 0.10.0 with 0.10.2
-- Restore CI dependency installation and remove redundant nightly CI coordination
+- Restore clean CI dependency installation before the unreleased N-API platform packages exist
+- Build x86_64 GNU and musl release binaries with libdeflate flags compatible with Zig
 
 ## [0.2.0] - 2026-05-20
 

@@ -222,6 +222,12 @@ jobs:
         if: ${{ matrix.use_zigbuild }}
         env:
           BUILD_TARGET: ${{ env.BUILD_TARGET }}
+          CFLAGS_x86_64_unknown_linux_gnu: >-
+            -DLIBDEFLATE_ASSEMBLER_DOES_NOT_SUPPORT_AVX512VNNI
+            -DLIBDEFLATE_ASSEMBLER_DOES_NOT_SUPPORT_VPCLMULQDQ
+          CFLAGS_x86_64_unknown_linux_musl: >-
+            -DLIBDEFLATE_ASSEMBLER_DOES_NOT_SUPPORT_AVX512VNNI
+            -DLIBDEFLATE_ASSEMBLER_DOES_NOT_SUPPORT_VPCLMULQDQ
         run: cargo zigbuild --release --target "$BUILD_TARGET"
 
       - name: Package native module
