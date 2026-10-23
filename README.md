@@ -38,8 +38,20 @@ in a BAM file in the mod BAM format (using MM/ML tags as specified in the
 
 ## Requirements
 
-- Node.js 22 or higher
+- Node.js 22.23.4+ within 22.x, 24.22.1+ within 24.x, or 26.12.1+ on 26.x and later release lines
 - For building from source: Rust toolchain
+
+Always use the latest security patch of a supported Node.js release line.
+The minimum versions above include the fix for **CVE-2026-111497**, an
+out-of-bounds write in Node.js's bundled Brotli decoder that can permit remote
+code execution when decompressing attacker-controlled data through `node:zlib`.
+See the [October 2026 Node.js security releases](https://nodejs.org/en/blog/vulnerability/october-2026-security-releases).
+
+This package does not bundle Node.js. Updating `@nanalogue/node` or its lockfile
+does not patch your runtime; upgrade Node.js separately. The `engines` field
+declares these requirements, but npm normally only warns unless `engine-strict`
+is enabled. Electron applications must upgrade to an Electron release containing
+the fix for its embedded runtime; updating the system Node.js is not sufficient.
 
 ## Supported platforms
 

@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 - Document that HTTPS alignment access and local CRAM reference downloads require an updated system or custom CA bundle following the eMudhra intermediate-CA compromise; upgrading the Node package alone does not refresh certificates
 - Update locked Tokio from 1.49.0 to 1.51.6 to address RUSTSEC-2026-0386 without adding an advisory exception
+- Require patched Node.js versions (`^22.23.4 || ^24.22.1 || >=26.12.1`) in the root and platform packages following CVE-2026-111497 in Node.js's bundled Brotli decoder; document that users must upgrade Node.js or their embedded Electron runtime separately
+- Select the latest patched Node.js 22/24 releases in CI and publishing, checking upstream rather than relying on older cached runtimes
 
 ## [0.2.1]
 
