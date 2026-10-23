@@ -57,19 +57,33 @@ for Linux (WSL).
 npm install @nanalogue/node
 ```
 
-## Remote BAM URLs
+## HTTPS certificates and remote alignment files
 
-When reading BAM files over HTTPS, the native dependency needs access to a CA
-certificate bundle. If remote URLs fail with a libcurl certificate error, set
-`CURL_CA_BUNDLE` before starting the Node.js script that imports
-`@nanalogue/node`. On Debian- and Ubuntu-based systems:
+HTTPS access uses HTSlib/libcurl/OpenSSL and a system or custom PEM CA
+certificate bundle. This applies to remote alignment files and to external
+reference downloads triggered by local CRAM files.
+
+Nanalogue 0.2.1 includes security fixes following the eMudhra intermediate-CA
+compromise. **Update your operating system's CA certificate package or custom
+bundle as well as this package.** Updating `@nanalogue/node` alone does not
+update the host's certificates. For containers, update the bundle inside the
+image and recreate existing containers; updating the host is not enough.
+
+Check existing `CURL_CA_BUNDLE` and `SSL_CERT_FILE` overrides: a stale custom
+bundle can bypass an updated system default. On macOS, browser or Keychain
+updates alone may not update `/etc/ssl/cert.pem`; use a maintained, patched PEM
+bundle, such as an updated Homebrew `ca-certificates` bundle.
+
+To select a bundle explicitly, set `CURL_CA_BUNDLE` before starting Node.js.
+On Debian- and Ubuntu-based systems, the system bundle is typically:
 
 ```bash
 CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt node your-script.js
 ```
 
-Use a PEM CA bundle installed on your system; its location varies by operating
-system and package manager.
+Its location varies by operating system and package manager. Do not disable
+TLS verification. See the upstream [HTTPS certificate guidance](https://github.com/DNAReplicationLab/nanalogue/blob/v0.2.1/README.md#https-certificates)
+for discovery rules and platform-specific caveats.
 
 ## Functions
 

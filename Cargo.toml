@@ -1,6 +1,6 @@
 [package]
 name = "nanalogue-node"
-version = "0.2.1"
+version = "0.2.2"
 edition = "2024"
 description = "Node.js bindings for Nanalogue: single-molecule BAM/Mod-BAM analysis"
 license = "MIT"
@@ -11,7 +11,7 @@ repository = "https://github.com/sathish-t/nanalogue-node"
 crate-type = ["cdylib"]
 
 [dependencies]
-nanalogue_core = { package = "nanalogue", version = "0.2.0" }
+nanalogue_core = { package = "nanalogue", version = "0.2.1" }
 napi = { version = "2", features = ["async", "serde-json", "tokio_rt"] }
 napi-derive = "2"
 rust-htslib = "1.0.0"
