@@ -21,7 +21,7 @@ in a BAM file in the mod BAM format (using MM/ML tags as specified in the
 - [Requirements](#requirements)
 - [Supported platforms](#supported-platforms)
 - [Installation](#installation)
-- [Remote BAM URLs](#remote-bam-urls)
+- [HTTPS certificates and remote alignment files](#https-certificates-and-remote-alignment-files)
 - [Functions](#functions)
   - [peek](#peek)
   - [readInfo](#readinfo)
@@ -221,6 +221,10 @@ The output is a JSON object for the first read. The `data` arrays contain
 
 Compute windowed modification densities across reads.
 
+`win` and `step` count retained modification-data positions after filtering,
+not sequence base pairs. Windows are formed separately for each base, strand,
+and modification type.
+
 <!-- TEST CODE: START windowReads -->
 ```typescript
 import { windowReads } from '@nanalogue/node';
@@ -273,6 +277,11 @@ Supports `winOp: 'grad_density'` for gradient mode.
 ### seqTable
 
 Extract sequences and qualities for a genomic region.
+
+`region` is required and must be non-empty. Only reads fully spanning the region
+are included: `fullRegion` must be `true` or omitted. `modRegion` defaults to
+`region`; if supplied explicitly, it must be the exact same string as `region`.
+If no reads match, the result is a header-only TSV.
 
 <!-- TEST CODE: START seqTable -->
 ```typescript
@@ -402,6 +411,11 @@ const page2 = await bamMods({
 ## Filtering Options
 
 All read functions support extensive filtering:
+
+`region` and `modRegion` use zero-based, start-inclusive/end-exclusive coordinates.
+For example, `chr1:1000-2000` selects positions 1000 through 1999, equivalent to
+`chr1:1001-2000` in samtools' one-based, inclusive notation. A bare contig name
+selects the whole contig.
 
 | Option | Description |
 |--------|-------------|

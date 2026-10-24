@@ -51,7 +51,7 @@ interface BaseReadOptionsCore {
   readIdSet?: string[];
   /** Number of threads for BAM reading. */
   threads?: number;
-  /** Include zero-length sequences (may cause crashes). */
+  /** Unsupported: true rejects with an error. Omit or set to false. */
   includeZeroLen?: boolean;
   /** Comma-separated read filter (e.g., "primary_forward,primary_reverse"). */
   readFilter?: string;
@@ -199,9 +199,9 @@ interface BaseWindowOptionsCore {
   bamPath: string;
   /** If true, treat bamPath as a URL. Otherwise treat as file path. */
   treatAsUrl?: boolean;
-  /** Window size in number of bases. */
+  /** Window size in retained modification-data positions after filtering, not base pairs. */
   win: number;
-  /** Step size for sliding the window. */
+  /** Step size in retained modification-data positions after filtering, not base pairs. */
   step: number;
   /** Type of windowing operation: "density" or "grad_density". */
   winOp?: 'density' | 'grad_density';
@@ -213,7 +213,7 @@ interface BaseWindowOptionsCore {
   readIdSet?: string[];
   /** Number of threads for BAM reading. */
   threads?: number;
-  /** Include zero-length sequences (may cause crashes). */
+  /** Unsupported: true rejects with an error. Omit or set to false. */
   includeZeroLen?: boolean;
   /** Comma-separated read filter. */
   readFilter?: string;

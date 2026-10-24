@@ -176,7 +176,7 @@ pub struct ReadOptions {
     pub read_id_set: Option<Vec<String>>,
     /// Number of threads for BAM reading.
     pub threads: Option<u8>,
-    /// Include zero-length sequences (may cause crashes).
+    /// Unsupported: true returns an error. Omit or set to false.
     pub include_zero_len: Option<bool>,
     /// Comma-separated read filter (e.g., `primary_forward,primary_reverse`).
     pub read_filter: Option<String>,
@@ -568,9 +568,9 @@ pub struct WindowOptions {
     pub bam_path: String,
     /// If true, treat `bam_path` as a URL. Otherwise treat as file path.
     pub treat_as_url: Option<bool>,
-    /// Window size in number of bases.
+    /// Window size in retained modification-data positions after filtering, not base pairs.
     pub win: i32,
-    /// Step size for sliding the window.
+    /// Step size in retained modification-data positions after filtering, not base pairs.
     pub step: i32,
     /// Type of windowing operation: `density` or `grad_density`.
     pub win_op: Option<String>,
@@ -583,7 +583,7 @@ pub struct WindowOptions {
     pub read_id_set: Option<Vec<String>>,
     /// Number of threads for BAM reading.
     pub threads: Option<u8>,
-    /// Include zero-length sequences (may cause crashes).
+    /// Unsupported: true returns an error. Omit or set to false.
     pub include_zero_len: Option<bool>,
     /// Comma-separated read filter.
     pub read_filter: Option<String>,

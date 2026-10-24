@@ -1,6 +1,6 @@
 # Simulation Configuration Files
 
-This directory contains JSON configuration files for generating test BAM files using `simulate_mod_bam()`.
+This directory contains JSON configuration files for generating test BAM files using `simulateModBam()`.
 
 ## simple_bam.json
 
@@ -27,7 +27,7 @@ This directory contains JSON configuration files for generating test BAM files u
 
 ## benchmark_bam.json
 
-**Purpose**: Performance benchmarking for reproducible speed testing
+**Purpose**: Larger fixture for Vitest scale and completion smoke tests
 
 **Specifications**:
 - **Contigs**: 2 contigs, each 1,000,000 bp (1 Mbp) long
@@ -43,11 +43,11 @@ This directory contains JSON configuration files for generating test BAM files u
   - Modification probability ranges: 10-20% and 70-80%
 
 **Use cases**:
-- Performance benchmarking with pytest-benchmark
-- Timing comparisons across different hardware
-- Regression testing for performance
-- Demonstrating package speed to users
-- Testing performance with realistic data volumes
+- Checking that `readInfo`, `bamMods`, and `windowReads` complete on larger inputs
+- Validating output shape and read counts in `tests/benchmark.test.ts`
+
+These tests use completion timeouts, not recorded timings or performance baselines;
+they do not provide reproducible speed measurements or performance regression comparisons.
 
 ## two_mods_bam.json
 
