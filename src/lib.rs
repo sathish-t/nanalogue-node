@@ -477,22 +477,23 @@ fn load_bam(bam: &InputBam) -> Result<rust_htslib::bam::IndexedReader> {
     }
 }
 
-/// Options for BAM simulation.
+/// Options for BAM or CRAM simulation.
 #[napi(object)]
 #[non_exhaustive]
 #[derive(Debug, Default)]
 pub struct SimulateOptions {
     /// JSON configuration string for the simulation.
     pub json_config: String,
-    /// Output path for the generated BAM file.
+    /// Output alignment path: `.bam` selects BAM; `.cram` selects CRAM 3.1.
     pub bam_path: String,
-    /// Output path for the generated FASTA reference file.
+    /// Output FASTA reference path. CRAM output also creates `<fasta_path>.fai`.
     pub fasta_path: String,
 }
 
-/// Simulates a BAM file with modifications based on JSON configuration.
+/// Simulates a BAM or CRAM file with modifications based on JSON configuration.
 ///
-/// Creates both a BAM file and a corresponding FASTA reference file.
+/// Creates an alignment file, its `.bai` or `.crai` index, and a FASTA reference.
+/// CRAM output also creates a FASTA index (`<fasta_path>.fai`).
 ///
 /// # Errors
 /// Returns an error if JSON parsing fails or file I/O operations fail.
@@ -740,6 +741,9 @@ fn window_reads_sync(options: &WindowOptions) -> Result<serde_json::Value> {
 /// Returns sequence table with read info as TSV string.
 ///
 /// Requires the `region` parameter to be set.
+/// Returns one row per read ID, with comma-space-separated sequences and matching
+/// quality strings for multiple retained alignments. Base qualities within each
+/// string are dot-separated.
 ///
 /// # Errors
 /// Returns an error if region is missing, BAM reading fails, or

@@ -123,10 +123,13 @@ export declare function readInfo(options: ReadOptions): Promise<ReadInfoRecord[]
 // Simulation types
 export interface SimulateOptions {
   jsonConfig: string;
+  /** Output alignment path: .bam selects BAM; .cram selects CRAM 3.1. */
   bamPath: string;
+  /** Output FASTA reference path. CRAM output also creates <fastaPath>.fai. */
   fastaPath: string;
 }
 
+/** Generates BAM or CRAM, its .bai or .crai index, and a FASTA reference. */
 export declare function simulateModBam(options: SimulateOptions): Promise<void>;
 
 // Detailed modification data types (bamMods)
@@ -282,4 +285,9 @@ export type WindowOptions = WindowOptionsWithRegion | WindowOptionsWithoutRegion
 
 export declare function windowReads(options: WindowOptions): Promise<WindowReadEntry[]>;
 
+/**
+ * Returns TSV columns read_id, sequence, and qualities, with one row per read ID.
+ * Multiple retained alignments have comma-space-separated sequences and matching
+ * quality strings; base qualities within each string are dot-separated.
+ */
 export declare function seqTable(options: ReadOptions): Promise<string>;

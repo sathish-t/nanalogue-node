@@ -300,6 +300,15 @@ console.log(sorted);
 The output is a TSV with three columns: `read_id`, `sequence`, and `qualities`.
 Sequence uses: `.` for deletion, lowercase for insertion, `Z` for modification.
 
+There is one row per read ID. If multiple alignments for that read pass the
+filters and fully span the region, their region-clipped sequences are joined
+with a comma and space (`, `) inside the `sequence` field. The `qualities` field
+uses the same separator between the corresponding per-alignment quality strings;
+within each string, base qualities are separated by dots. For example,
+`GTAC, CGTA, ACGT` can have qualities
+`12.13.14.15, 11.12.13.14, 10.11.12.13`. A single retained alignment has no
+comma separator. The overall table remains tab-separated, not CSV.
+
 <!-- TEST OUTPUT: START seqTable -->
 ```text
 read_id	sequence	qualities
@@ -310,7 +319,14 @@ read_id	sequence	qualities
 
 ### simulateModBam
 
-Generate synthetic BAM files with defined modification patterns (useful for testing).
+Generate synthetic BAM or CRAM files with defined modification patterns (useful for testing).
+
+Despite its name, `bamPath` selects the output format by its filename extension:
+use `.bam` for BAM or `.cram` for CRAM 3.1. For example, set
+`bamPath: 'output.cram'` to generate CRAM instead of BAM. Both formats create the
+FASTA reference at `fastaPath` and an alignment index (`<bamPath>.bai` for BAM,
+`<bamPath>.crai` for CRAM). CRAM output also creates `<fastaPath>.fai`;
+keep the generated FASTA and its index available when reading the CRAM file.
 
 <!-- TEST CODE: NOOUTPUT simulateModBam -->
 ```typescript
